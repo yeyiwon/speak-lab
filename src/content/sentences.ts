@@ -78,3 +78,78 @@ export const SEED_SENTENCES_V2: typeof SEED_SENTENCES = [
   { id: "s2-all-2", part: "all", en: "To be more specific, I mean that it's very convenient.", ko: "좀 더 구체적으로 말하면, 그게 아주 편리하다는 뜻입니다.", keywords: ["To be more specific"] },
   { id: "s2-all-3", part: "all", en: "Overall, I'm very satisfied with it.", ko: "전반적으로 저는 그것에 매우 만족합니다.", keywords: ["Overall", "satisfied"] },
 ];
+
+/**
+ * v3 — answer templates (slot in your own words: [ ]) + multi-purpose sentences.
+ * Written for SPEAK LAB; not taken from any lecture or textbook.
+ */
+type Seed = (typeof SEED_SENTENCES)[number];
+const T = (id: string, part: Seed["part"], en: string, ko: string, keywords: string[]): Seed => ({ id, part, en, ko, keywords });
+
+export const SEED_SENTENCES_V3: Seed[] = [
+  // ── Part 2 template: 장소 → 메인 인물 → 주변 → 배경 → 느낌
+  T("s3-p2-t1", 2, "This picture was taken in [an office].", "[템플릿·장소] 이 사진은 [사무실]에서 찍혔습니다.", ["was taken in"]),
+  T("s3-p2-t2", 2, "The first thing I can see is [a man] who is [talking on the phone].", "[템플릿·메인] 가장 먼저 보이는 것은 [통화 중인] [남자]입니다.", ["The first thing I can see", "who is"]),
+  T("s3-p2-t3", 2, "He has [short dark hair] and he is wearing [a gray suit].", "[템플릿·외모] 그는 [짧은 검은 머리]이고 [회색 정장]을 입고 있습니다.", ["has", "is wearing"]),
+  T("s3-p2-t4", 2, "To his right, [a woman] is [typing something on her laptop].", "[템플릿·주변] 그의 오른쪽에서 [여자]가 [노트북에 무언가 입력하고] 있습니다.", ["To his right"]),
+  T("s3-p2-t5", 2, "On the table, there are [some documents and a cup of coffee].", "[템플릿·사물] 테이블 위에는 [서류 몇 장과 커피 한 잔]이 있습니다.", ["On the table", "there are"]),
+  T("s3-p2-t6", 2, "In the background, I can see [a large window and some plants].", "[템플릿·배경] 배경에는 [큰 창문과 화분 몇 개]가 보입니다.", ["In the background", "I can see"]),
+  T("s3-p2-t7", 2, "Overall, it seems like [a busy morning at work].", "[템플릿·마무리] 전반적으로 [바쁜 업무 아침]인 것 같습니다.", ["Overall", "it seems like"]),
+  T("s3-p2-1", 2, "Both of them are looking at the same direction.", "두 사람 모두 같은 방향을 보고 있습니다.", ["Both of them", "direction"]),
+  T("s3-p2-2", 2, "A few people are walking across the street.", "몇몇 사람들이 길을 건너고 있습니다.", ["walking across"]),
+  T("s3-p2-3", 2, "Some items are displayed on the shelves.", "몇몇 물건들이 선반에 진열되어 있습니다.", ["displayed", "shelves"]),
+  T("s3-p2-4", 2, "It looks like they are having a meeting.", "그들은 회의를 하고 있는 것 같아 보입니다.", ["It looks like", "having a meeting"]),
+  T("s3-p2-5", 2, "The weather looks sunny and warm.", "날씨가 화창하고 따뜻해 보입니다.", ["looks", "sunny"]),
+
+  // ── Part 3 template: 답 + 이유 (+ 예시)
+  T("s3-p3-t1", 3, "I [go to the gym] [about twice a week], and I usually go [with my coworkers].", "[템플릿·빈도+동행] 저는 [주 2회 정도] [헬스장에 가고], 보통 [동료들과] 갑니다.", ["about twice a week", "usually go"]),
+  T("s3-p3-t2", 3, "The last time I [went shopping] was [last Saturday], and I [bought a jacket].", "[템플릿·마지막 경험] 마지막으로 [쇼핑한] 건 [지난 토요일]이었고, [재킷을 샀습니다].", ["The last time", "was"]),
+  T("s3-p3-t3", 3, "I prefer [A] to [B], because it is much more [convenient].", "[템플릿·선호] 저는 [B]보다 [A]를 선호하는데, 훨씬 더 [편리]하기 때문입니다.", ["I prefer", "because"]),
+  T("s3-p3-t4", 3, "I think [the price] is the most important factor when choosing [a hotel].", "[템플릿·중요 요소] [호텔]을 고를 때 [가격]이 가장 중요한 요소라고 생각합니다.", ["most important factor", "when choosing"]),
+  T("s3-p3-t5", 3, "If I had the chance, I would like to [try it again].", "[템플릿·의향] 기회가 된다면 [다시 해보고] 싶습니다.", ["If I had the chance", "would like to"]),
+  T("s3-p3-1", 3, "It depends on the situation, but I usually choose the cheaper one.", "상황에 따라 다르지만, 보통은 더 저렴한 것을 고릅니다.", ["It depends on", "usually choose"]),
+  T("s3-p3-2", 3, "Honestly, I'm not really interested in that.", "솔직히 저는 그것에 별로 관심이 없습니다.", ["Honestly", "interested in"]),
+  T("s3-p3-3", 3, "There are several reasons, but the biggest one is time.", "여러 이유가 있지만 가장 큰 이유는 시간입니다.", ["several reasons", "the biggest one"]),
+  T("s3-p3-4", 3, "It's a great way to spend time with my family.", "가족과 시간을 보내기에 아주 좋은 방법입니다.", ["great way to", "spend time"]),
+  T("s3-p3-5", 3, "I can easily find what I want, and it saves me a lot of money.", "원하는 것을 쉽게 찾을 수 있고, 돈도 많이 아낄 수 있습니다.", ["easily find", "saves me"]),
+  T("s3-p3-6", 3, "Since I'm very busy on weekdays, I usually do it on weekends.", "평일엔 너무 바빠서 보통 주말에 합니다.", ["Since", "on weekdays"]),
+  T("s3-p3-7", 3, "It used to be difficult, but now it's much easier thanks to technology.", "예전엔 어려웠지만 지금은 기술 덕분에 훨씬 쉬워졌습니다.", ["used to be", "thanks to"]),
+  T("s3-p3-8", 3, "I would say about thirty minutes, more or less.", "대략 30분 정도라고 할 수 있습니다.", ["I would say", "more or less"]),
+
+  // ── Part 4 template: 정보 전달 · 정정 · 나열
+  T("s3-p4-t1", 4, "According to the schedule, [the meeting] will be held on [Monday] at [10 a.m.] in [Room 302].", "[템플릿·기본 정보] 일정에 따르면 [회의]는 [월요일] [오전 10시]에 [302호]에서 열립니다.", ["According to the schedule", "will be held"]),
+  T("s3-p4-t2", 4, "I'm afraid you have the wrong information. [The workshop] is actually scheduled for [Thursday].", "[템플릿·정정] 잘못 알고 계신 것 같아요. [워크숍]은 사실 [목요일]로 예정되어 있습니다.", ["wrong information", "scheduled for"]),
+  T("s3-p4-t3", 4, "There are [two] sessions related to [marketing].", "[템플릿·개수] [마케팅]과 관련된 세션이 [두 개] 있습니다.", ["related to"]),
+  T("s3-p4-t4", 4, "The first one is [Social Media Strategy], which will be led by [Ms. Park] at [11 a.m.].", "[템플릿·나열1] 첫 번째는 [소셜 미디어 전략]으로, [오전 11시]에 [박 씨]가 진행합니다.", ["The first one", "led by"]),
+  T("s3-p4-t5", 4, "The second one is [Brand Design], and it starts at [3 p.m.].", "[템플릿·나열2] 두 번째는 [브랜드 디자인]이고, [오후 3시]에 시작합니다.", ["The second one", "starts at"]),
+  T("s3-p4-1", 4, "Don't worry, it has been rescheduled to next Tuesday.", "걱정 마세요, 다음 주 화요일로 일정이 변경되었습니다.", ["rescheduled"]),
+  T("s3-p4-2", 4, "The registration fee is 30 dollars per person.", "등록비는 1인당 30달러입니다.", ["registration fee", "per person"]),
+  T("s3-p4-3", 4, "Lunch will be provided, so you don't need to bring anything.", "점심이 제공되니 아무것도 가져오실 필요 없습니다.", ["will be provided", "don't need to"]),
+  T("s3-p4-4", 4, "You will be staying at the Grand Hotel for three nights.", "그랜드 호텔에서 3박 머무르실 예정입니다.", ["will be staying", "three nights"]),
+  T("s3-p4-5", 4, "Your flight departs at 8:30 a.m. and arrives at 10:50 a.m.", "비행기는 오전 8시 30분에 출발해서 오전 10시 50분에 도착합니다.", ["departs", "arrives"]),
+  T("s3-p4-6", 4, "Unfortunately, that session is no longer available.", "안타깝게도 그 세션은 더 이상 진행되지 않습니다.", ["Unfortunately", "no longer available"]),
+
+  // ── Part 5 template: 입장 → 이유1(+결과) → 이유2 → 예시 → 결론
+  T("s3-p5-t1", 5, "I [agree] that [it is better to work for a large company], for two main reasons.", "[템플릿·입장] 저는 두 가지 주된 이유로 [대기업에서 일하는 것이 낫다]는 데 [동의]합니다.", ["for two main reasons"]),
+  T("s3-p5-t2", 5, "First of all, [large companies offer better benefits].", "[템플릿·이유1] 우선, [대기업은 더 나은 복지를 제공합니다].", ["First of all"]),
+  T("s3-p5-t3", 5, "This means that [employees can feel more secure about their future].", "[템플릿·부연] 이는 [직원들이 미래에 대해 더 안정감을 느낄 수 있다]는 뜻입니다.", ["This means that"]),
+  T("s3-p5-t4", 5, "In addition, [there are more opportunities to learn new skills].", "[템플릿·이유2] 게다가 [새로운 기술을 배울 기회가 더 많습니다].", ["In addition"]),
+  T("s3-p5-t5", 5, "Let me give you an example. When I was [in college], I [did an internship at a big company].", "[템플릿·예시] 예를 들어볼게요. 제가 [대학생]일 때, [대기업에서 인턴을 했습니다].", ["Let me give you an example", "When I was"]),
+  T("s3-p5-t6", 5, "Because of this experience, I [learned a lot about teamwork].", "[템플릿·예시 결과] 이 경험 덕분에 저는 [팀워크에 대해 많이 배웠습니다].", ["Because of this experience"]),
+  T("s3-p5-t7", 5, "Therefore, I believe that [working for a large company is the better choice].", "[템플릿·결론] 그러므로 저는 [대기업에서 일하는 것이 더 나은 선택]이라고 믿습니다.", ["Therefore", "I believe that"]),
+  T("s3-p5-1", 5, "It helps people become more independent and responsible.", "그것은 사람들이 더 독립적이고 책임감 있게 되도록 돕습니다.", ["independent", "responsible"]),
+  T("s3-p5-2", 5, "People can communicate more effectively with each other.", "사람들이 서로 더 효과적으로 소통할 수 있습니다.", ["communicate", "effectively"]),
+  T("s3-p5-3", 5, "It allows people to focus on what really matters.", "그것은 사람들이 정말 중요한 것에 집중하게 해줍니다.", ["allows people to", "what really matters"]),
+  T("s3-p5-4", 5, "It is a good chance to gain practical experience.", "실무 경험을 쌓을 좋은 기회입니다.", ["good chance", "practical experience"]),
+  T("s3-p5-5", 5, "In the long run, it can lead to better results.", "장기적으로 그것은 더 좋은 결과로 이어질 수 있습니다.", ["In the long run", "lead to"]),
+  T("s3-p5-6", 5, "Of course, there are some disadvantages, but the advantages are much bigger.", "물론 단점도 있지만, 장점이 훨씬 큽니다.", ["disadvantages", "advantages"]),
+  T("s3-p5-7", 5, "Not only does it save time, but it also reduces stress.", "그것은 시간을 아낄 뿐만 아니라 스트레스도 줄여줍니다.", ["Not only", "but it also"]),
+  T("s3-p5-8", 5, "Young people these days are very familiar with technology.", "요즘 젊은 사람들은 기술에 매우 익숙합니다.", ["these days", "familiar with"]),
+
+  // ── Common / any part
+  T("s3-all-1", "all", "Let me put it this way.", "이렇게 말해볼게요. (말 다시 시작할 때)", ["put it this way"]),
+  T("s3-all-2", "all", "What I mean is that it's really helpful.", "제 말은 그게 정말 도움이 된다는 거예요.", ["What I mean is"]),
+  T("s3-all-3", "all", "I've never thought about it before, but I think it's a good idea.", "전에 생각해본 적은 없지만, 좋은 생각인 것 같아요.", ["never thought about it", "good idea"]),
+  T("s3-all-4", "all", "As far as I know, it's very popular in Korea.", "제가 알기로는 한국에서 매우 인기가 많습니다.", ["As far as I know", "popular"]),
+  T("s3-all-5", "all", "That's pretty much it.", "대략 그 정도입니다. (답변 마무리)", ["pretty much it"]),
+];

@@ -5,7 +5,7 @@ import { canSpeak, loadVoices, rankVoices, speak, voiceQualityLabel } from "@/li
 import type { Settings } from "@/lib/types";
 import { Icon } from "./Icon";
 
-const SAMPLE = "Could you give me all the details about the sessions after lunch?";
+const SAMPLE = "This is how the sentences you add yourself will sound.";
 
 export function VoicePicker({ settings, onChange }: { settings: Settings; onChange: (p: Partial<Settings>) => void }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[] | null>(null);
@@ -22,8 +22,10 @@ export function VoicePicker({ settings, onChange }: { settings: Settings; onChan
 
   return (
     <div className="clay-sm p-4">
-      <p className="font-semibold">질문 읽기 음성</p>
-      <p className="text-xs text-ink-muted">기기에 설치된 영어 음성 중 선택합니다. 기본은 가장 자연스러운 음성을 자동 선택해요.</p>
+      <p className="font-semibold">원어민 음성</p>
+      <p className="text-xs text-ink-muted">
+        기본 제공 문장·문제·예시 답변은 뉴럴 TTS(Kokoro)로 미리 녹음한 미국 영어 음성으로 재생돼요. 아래 음성은 <strong className="text-ink">직접 등록한 문장</strong>에만 쓰입니다.
+      </p>
       {voices === null ? (
         <p className="mt-3 text-sm text-ink-muted">음성 목록 불러오는 중…</p>
       ) : voices.length === 0 ? (

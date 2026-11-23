@@ -78,7 +78,7 @@ function Library() {
 
       <h2 className="mt-12 text-xl font-bold">강의 목록</h2>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto pb-2 pt-1" role="tablist" aria-label="자료 분류">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1" role="tablist" aria-label="자료 분류">
           {(["any", ...PARTS, "all", "bookmarked"] as Filter[]).map((f) => (
             <button
               key={String(f)}
@@ -128,7 +128,7 @@ function MaterialRow({ m, open, onToggle, initialStart = 0 }: { m: Material; ope
 
   return (
     <li id={`m-${m.id}`}>
-      <div className={`row-hover flex items-center gap-3 px-4 py-4 sm:gap-4 sm:px-6 ${open ? "bg-glacier-100/60" : ""}`}>
+      <div className={`row-hover flex items-center gap-3 py-4 pl-4 pr-4 sm:gap-5 sm:pl-6 sm:pr-8 ${open ? "bg-white/40" : ""}`}>
         <button
           type="button"
           role="checkbox"
@@ -156,26 +156,28 @@ function MaterialRow({ m, open, onToggle, initialStart = 0 }: { m: Material; ope
             </span>
           </span>
         </button>
+        <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-white/50 p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7)]">
         <button
           type="button"
-          className={`icon-btn ${m.bookmarked ? "text-graphite-900" : "text-glacier-400"}`}
+          className={`icon-btn !h-9 !w-9 !rounded-full ${m.bookmarked ? "text-graphite-900" : "text-glacier-600"}`}
           aria-pressed={m.bookmarked}
           aria-label="북마크"
           onClick={() => actions.saveMaterial({ ...m, bookmarked: !m.bookmarked })}
         >
           <Icon name="bookmark" size={18} fill={m.bookmarked ? "currentColor" : "none"} />
         </button>
-        <button type="button" className="icon-btn text-ink-muted" aria-label={open ? "접기" : "펼치기"} aria-expanded={open} onClick={onToggle}>
+        <button type="button" className="icon-btn !h-9 !w-9 !rounded-full text-ink-muted" aria-label={open ? "접기" : "펼치기"} aria-expanded={open} onClick={onToggle}>
           <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }}>
             <Icon name="chev" size={18} />
           </motion.span>
         </button>
+        </div>
       </div>
 
       <AnimatePresence initial={false}>
         {open && (
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
-            <div className="grid gap-6 bg-glacier-100/60 px-4 pb-6 pt-2 sm:px-6 lg:grid-cols-[1.3fr_1fr]">
+            <div className="grid gap-6 bg-white/40 px-4 pb-6 pt-2 sm:px-8 lg:grid-cols-[1.3fr_1fr]">
               <div>
                 {vid ? (
                   <div className="clay-sunk overflow-hidden !rounded-[20px] p-1.5">
@@ -360,7 +362,7 @@ function Guide({ onJump }: { onJump: (t: number) => void }) {
         <span className="text-xs text-ink-muted">SPEAK LAB이 정리한 일반적인 답변 틀 · 강의 내용 복제 아님</span>
       </div>
       <div className="mt-4 grid gap-5 lg:grid-cols-[200px_1fr]">
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col" role="tablist" aria-label="파트">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 lg:flex-col" role="tablist" aria-label="파트">
           {PARTS.map((p) => (
             <button key={p} role="tab" aria-selected={part === p} onClick={() => setPart(p)} className={`btn shrink-0 !justify-start !rounded-2xl !text-sm ${part === p ? "!bg-graphite-900 !text-glacier-50" : ""}`}>
               Part {p} <span className="text-xs font-semibold opacity-70">{PART_SPECS[p].nameKo}</span>

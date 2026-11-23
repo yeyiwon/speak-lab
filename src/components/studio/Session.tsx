@@ -7,7 +7,7 @@ import type { QuestionSet } from "@/content/questions";
 import { useFocusMode } from "@/components/AppShell";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { Icon } from "@/components/Icon";
-import { beep, canSpeak, speak } from "@/lib/audio/sound";
+import { beep, canSpeak, speak, stopSpeaking } from "@/lib/audio/sound";
 import { useCountdown } from "@/lib/audio/useCountdown";
 import { useRecorder, type RecResult } from "@/lib/audio/useRecorder";
 import { useData } from "@/lib/data/store";
@@ -65,7 +65,7 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
     return () => {
       const secs = (Date.now() - sessionStart) / 1000;
       if (savedRef.current.length) actions.logSession("speaking", secs, savedRef.current.length);
-      if (canSpeak()) window.speechSynthesis.cancel();
+      stopSpeaking();
     };
   }, [actions]);
 
@@ -473,6 +473,11 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                           <div className="clay-sunk mt-4 p-5">
                             {q.sample && <p className="leading-relaxed text-glacier-100">{q.sample}</p>}
+                            {q.sample && (
+                              <button type="button" className="btn mt-3 !min-h-[38px] !text-sm" onClick={() => speak(q.sample, { rate: settings.speechRate })}>
+                                <Icon name="speaker" size={16} /> 원어민 예시 답변 듣기
+                              </button>
+                            )}
                             <p className="mt-3 text-sm text-glacier-300">💡 {q.tip}</p>
                             <p className="mt-3 text-[0.7rem] text-graphite-300">SPEAK LAB이 작성한 예시입니다. 공식 모범 답안이 아닙니다.</p>
                           </div>

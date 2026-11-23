@@ -4,17 +4,16 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFocusMode } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
-import { canSpeak, speak } from "@/lib/audio/sound";
+import { speak, stopSpeaking } from "@/lib/audio/sound";
 import { useCountdown } from "@/lib/audio/useCountdown";
 import { useData } from "@/lib/data/store";
 import type { Sentence, TrainerMode } from "@/lib/types";
 
 export const MODES: { id: TrainerMode; label: string; desc: string }[] = [
-  { id: "hint", label: "한국어 보고 말하기", desc: "한국어만 보고 영어로 말한 뒤 카드 뒤집기" },
-  { id: "read", label: "따라 읽기", desc: "영어·한국어를 보며 소리 내어 읽기" },
+  { id: "hint", label: "보면서 말하기", desc: "영어·한국어를 한 화면에 보고 소리 내어 말하기" },
+  { id: "shuffle", label: "섞어서 말하기", desc: "전체 문장을 랜덤 순서로" },
+  { id: "timed", label: "시간 안에 말하기", desc: "문장 길이에 맞춘 시간 막대를 보며 말하기" },
   { id: "cloze", label: "빈칸 채우기", desc: "핵심 표현을 직접 입력" },
-  { id: "timed", label: "시간 안에 말하기", desc: "문장 길이에 맞춘 카운트다운" },
-  { id: "shuffle", label: "섞어서 복습", desc: "전체 문장을 랜덤 순서로" },
 ];
 
 function shuffle<T>(xs: T[]): T[] {
@@ -37,11 +36,27 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
   const setFocus = useFocusMode();
   const [queue, setQueue] = useState<string[]>(() => (mode === "shuffle" ? shuffle(pool) : pool).map((s) => s.id));
   const [idx, setIdx] = useState(0);
-  const [revealed, setRevealed] = useState(mode === "read");
+  const [revealed, setRevealed] = useState(mode !== "cloze");
   const [answers, setAnswers] = useState<string[]>([]);
   const [checked, setChecked] = useState(false);
   const [done, setDone] = useState(0);
   const [again, setAgain] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(() => {
+    try {
+      return localStorage.getItem("sl-autoplay") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const toggleAuto = () => {
+    const v = !autoPlay;
+    setAutoPlay(v);
+    try {
+      localStorage.setItem("sl-autoplay", v ? "1" : "0");
+    } catch {
+      /* storage unavailable — keep in memory */
+    }
+  };
   const doneRef = useRef(0);
   useEffect(() => {
     doneRef.current = done;
@@ -53,17 +68,24 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
     return () => {
       setFocus(false);
       actions.logSession("sentences", (Date.now() - started) / 1000, doneRef.current);
-      if (canSpeak()) window.speechSynthesis.cancel();
+      stopSpeaking();
     };
   }, [setFocus, actions]);
 
   const current = data?.sentences.find((s) => s.id === queue[idx]);
   const finished = idx >= queue.length;
-  const effMode: TrainerMode = mode === "shuffle" ? "hint" : mode;
+  const effMode: TrainerMode = mode === "shuffle" || mode === "read" ? "hint" : mode;
   const voice = { voiceURI: data?.settings.voiceURI, rate: data?.settings.speechRate };
+  const currentEn = current?.en;
+  // Shadowing: play the native recording as each card appears (not in fill-in mode, where it would give the answer away).
+  useEffect(() => {
+    if (!autoPlay || !currentEn || mode === "cloze") return;
+    const stop = speak(currentEn, { voiceURI: data?.settings.voiceURI, rate: data?.settings.speechRate });
+    return () => stop();
+  }, [idx, currentEn, autoPlay, mode, data?.settings.voiceURI, data?.settings.speechRate]);
 
   const timedSec = current ? Math.min(15, Math.max(4, Math.round(current.en.split(/\s+/).length * 0.6 + 2))) : 5;
-  const remaining = useCountdown(timedSec, effMode === "timed" && !revealed && !finished, () => setRevealed(true), `${idx}-${queue[idx]}`);
+  const remaining = useCountdown(timedSec, effMode === "timed" && !finished, () => {}, `${idx}-${queue[idx]}`);
 
   const cloze = useMemo(() => (current ? buildCloze(current) : null), [current]);
   const blanks = cloze?.parts.filter((p): p is { n: number; word: string } => typeof p !== "string") ?? [];
@@ -78,7 +100,7 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
       setQueue((q) => [...q, current.id]);
     }
     setIdx((i) => i + 1);
-    setRevealed(mode === "read");
+    setRevealed(mode !== "cloze");
     setChecked(false);
     setAnswers([]);
   }
@@ -136,10 +158,10 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
           <>
             <p className="eyebrow mb-3 flex items-center justify-between">
               <span>{MODES.find((m) => m.id === mode)?.label}</span>
-              {effMode === "timed" && !revealed && <span className={`num text-xl font-bold normal-case tracking-normal ${remaining < 2000 ? "text-rec" : "text-ink"}`}>{Math.ceil(remaining / 1000)}s</span>}
+              {effMode === "timed" && <span className={`num text-xl font-bold normal-case tracking-normal ${remaining < 2000 ? "text-rec" : "text-ink"}`}>{Math.ceil(remaining / 1000)}s</span>}
             </p>
 
-            <div style={{ perspective: 1400 }}>
+            <div>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${idx}-${current.id}`}
@@ -189,50 +211,36 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
                       )}
                     </div>
                   ) : (
-                    <motion.button
-                      type="button"
-                      className="relative block min-h-[260px] w-full text-left"
-                      style={{ transformStyle: "preserve-3d" }}
-                      animate={{ rotateY: revealed && effMode !== "read" ? 180 : 0 }}
-                      transition={{ type: "spring", stiffness: 180, damping: 22 }}
-                      onClick={() => effMode !== "read" && setRevealed((r) => !r)}
-                      aria-label={revealed ? "카드 다시 뒤집기" : "카드 뒤집어 영어 확인"}
-                    >
-                      <span className="clay absolute inset-0 flex flex-col justify-center p-7 sm:p-9" style={{ backfaceVisibility: "hidden" }}>
-                        {effMode === "read" ? (
-                          <>
-                            <span className="text-[1.45rem] font-semibold leading-snug sm:text-[1.65rem]">{current.en}</span>
-                            <span className="mt-4 text-ink-muted">{current.ko}</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-[1.4rem] font-bold leading-snug sm:text-[1.55rem]">{current.ko}</span>
-                            <span className="mt-6 text-sm text-ink-muted">영어로 소리 내어 말해보고, 카드를 눌러 확인하세요.</span>
-                          </>
-                        )}
-                      </span>
-                      {effMode !== "read" && (
-                        <span className="clay-graphite absolute inset-0 flex flex-col justify-center p-7 sm:p-9" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-                          <span className="text-[1.45rem] font-semibold leading-snug sm:text-[1.65rem]">{current.en}</span>
-                          <span className="mt-4 text-sm text-glacier-300">{current.ko}</span>
-                        </span>
+                    <div className="clay-graphite flex min-h-[240px] flex-col justify-center p-7 sm:p-9">
+                      <p className="text-[1.45rem] font-semibold leading-snug sm:text-[1.7rem]">{current.en}</p>
+                      <p className="mt-4 text-[0.98rem] text-glacier-300">{current.ko}</p>
+                      {effMode === "timed" && (
+                        <div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10" aria-hidden>
+                          <div className="h-full rounded-full bg-lime transition-[width] duration-100" style={{ width: `${(remaining / (timedSec * 1000)) * 100}%` }} />
+                        </div>
                       )}
-                    </motion.button>
+                    </div>
                   )}
                 </motion.div>
               </AnimatePresence>
             </div>
 
             <div className="mt-7 flex flex-col gap-3">
-              {canSpeak() && (revealed || effMode === "read") && (
-                <button type="button" className="btn btn-ghost mx-auto !min-h-[40px] !text-sm" onClick={() => speak(current.en, voice)}>
-                  <Icon name="speaker" size={17} /> 원어 발음 듣기
-                </button>
-              )}
-              {!revealed && effMode !== "cloze" && (
-                <button type="button" className="btn btn-primary !min-h-[56px] !text-base" onClick={() => setRevealed(true)}>
-                  정답 보기
-                </button>
+              {revealed && (
+                <div className="flex items-center gap-3">
+                  <button type="button" className="btn btn-glacier !min-h-[52px] flex-1 !text-base" onClick={() => speak(current.en, voice)}>
+                    <Icon name="speaker" size={18} /> 원어민 발음 듣기
+                  </button>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoPlay}
+                    onClick={() => toggleAuto()}
+                    className={`btn !min-h-[52px] !px-4 !text-sm ${autoPlay ? "!bg-graphite-900 !text-lime" : ""}`}
+                  >
+                    자동 재생 {autoPlay ? "ON" : "OFF"}
+                  </button>
+                </div>
               )}
               {effMode === "cloze" && !checked && (
                 <button
@@ -256,7 +264,7 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
                   </button>
                 </motion.div>
               )}
-              <p className="hidden text-center text-xs text-ink-muted sm:block">Space 뒤집기 · → 다음 · ← 다시 · Esc 끝내기</p>
+              <p className="hidden text-center text-xs text-ink-muted sm:block">→ / Enter 다음 · ← 다시 · Esc 끝내기</p>
             </div>
           </>
         )}

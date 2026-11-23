@@ -94,16 +94,12 @@ export default function TodayPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Stat label="목표" value={level ? `Lv${level.level}` : "—"} sub={level ? `${level.range}점` : "설정에서 지정"} />
-          <Stat
-            label="시험"
-            value={dday === null ? "미정" : dday > 0 ? `D-${dday}` : dday === 0 ? "D-Day" : `D+${-dday}`}
-            sub={settings.examDate ?? "날짜를 정하면 계획이 바뀌어요"}
-          />
-          <Stat label="연속 학습" value={`${days}일`} sub={days ? "기록이 이어지고 있어요" : "오늘 시작해요"} icon="flame" />
-          <Stat label="복습 대기" value={`${dueCount}문장`} sub="간격 반복 일정 기준" icon="cards" />
-        </div>
+        <dl className="clay flex flex-col justify-between divide-y divide-glacier-300/40 px-6 py-2">
+          <Fact label="목표" value={level ? `Lv${level.level}` : "—"} sub={level ? `${level.range}점` : ""} />
+          <Fact label="시험" value={dday === null ? "미정" : dday > 0 ? `D-${dday}` : dday === 0 ? "D-Day" : `D+${-dday}`} sub={settings.examDate ?? "설정에서 날짜 지정"} />
+          <Fact label="연속 학습" value={`${days}일`} sub={days ? "기록이 이어지는 중" : "오늘 시작해요"} />
+          <Fact label="복습 대기" value={`${dueCount}문장`} sub="오늘 다시 볼 문장" />
+        </dl>
       </section>
 
       {/* Plan */}
@@ -120,7 +116,7 @@ export default function TodayPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.04 * i, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link href={hrefFor(item)} className="row-hover group flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5">
+              <Link href={hrefFor(item)} className="row-hover group flex items-center gap-4 py-4 pl-5 pr-5 sm:py-5 sm:pl-6 sm:pr-8">
                 <span
                   className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors ${
                     done ? "bg-graphite-900 text-lime" : "bg-glacier-200/70 text-glacier-700"
@@ -186,18 +182,6 @@ export default function TodayPage() {
   );
 }
 
-function Stat({ label, value, sub, icon }: { label: string; value: string; sub: string; icon?: IconName }) {
-  return (
-    <div className="clay flex flex-col justify-between p-5">
-      <p className="eyebrow flex items-center gap-1.5">
-        {icon && <Icon name={icon} size={14} />}
-        {label}
-      </p>
-      <p className="mt-3 text-[1.9rem] font-bold leading-none tracking-tight">{value}</p>
-      <p className="mt-2 truncate text-xs text-ink-muted">{sub}</p>
-    </div>
-  );
-}
 
 function ProgressRing({ value }: { value: number }) {
   const r = 38;
@@ -220,5 +204,17 @@ function ProgressRing({ value }: { value: number }) {
         transform="rotate(-90 48 48)"
       />
     </svg>
+  );
+}
+
+function Fact({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-3.5">
+      <dt className="text-sm text-ink-muted">{label}</dt>
+      <dd className="text-right">
+        <span className="num text-xl font-semibold tracking-tight">{value}</span>
+        {sub && <span className="ml-2 hidden text-xs text-ink-muted sm:inline">{sub}</span>}
+      </dd>
+    </div>
   );
 }

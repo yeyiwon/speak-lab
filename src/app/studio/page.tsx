@@ -59,7 +59,7 @@ function Studio() {
     <Page>
       <PageHeader eyebrow="Speaking Studio" title={<>실제 시험 시간으로<br />입을 여는 연습.</>} />
 
-      <div role="tablist" aria-label="파트 선택" className="mt-8 flex gap-2 overflow-x-auto pb-3 pt-1">
+      <div role="tablist" aria-label="파트 선택" className="mt-8 flex gap-2 overflow-x-auto no-scrollbar pb-3 pt-1">
         {PARTS.map((p) => (
           <button
             key={p}

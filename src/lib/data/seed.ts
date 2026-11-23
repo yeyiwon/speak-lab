@@ -1,11 +1,11 @@
 import { SEED_MATERIALS, VERIFIED_AT } from "@/content/materials";
-import { SEED_SENTENCES, SEED_SENTENCES_V2 } from "@/content/sentences";
+import { SEED_SENTENCES, SEED_SENTENCES_V2, SEED_SENTENCES_V3 } from "@/content/sentences";
 
 import { today } from "../date";
 import type { Material, Sentence, Settings } from "../types";
 
 /** Bump when bundled content changes; existing browsers merge new items on next load. */
-export const CONTENT_VERSION = 2;
+export const CONTENT_VERSION = 3;
 
 export function defaultSettings(): Settings {
   return {
@@ -63,5 +63,5 @@ export function newSentence(p: Pick<Sentence, "en" | "ko" | "part" | "keywords">
 }
 
 export function seedSentences(): Sentence[] {
-  return [...SEED_SENTENCES, ...SEED_SENTENCES_V2].map((s) => newSentence({ ...s, origin: "sample" }));
+  return [...SEED_SENTENCES, ...SEED_SENTENCES_V2, ...SEED_SENTENCES_V3].map((s) => newSentence({ ...s, origin: "sample" }));
 }

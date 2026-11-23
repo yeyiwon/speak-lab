@@ -91,30 +91,79 @@ export interface SpeakOptions {
 }
 
 /** Read text aloud with the best available English voice (no network cost). Returns a cancel function. */
+/* ───────── Pre-recorded native voice (Kokoro-82M, Apache-2.0) ─────────
+ * Bundled sentences/questions were synthesized ahead of time with a neural
+ * American-English voice (public/tts/*.m4a). The manifest maps normalized
+ * text → file id. Anything not in the manifest (e.g. the learner's own
+ * sentences) falls back to the browser's speech synthesis.
+ */
+let manifest: Record<string, string> | null = null;
+let manifestP: Promise<Record<string, string>> | null = null;
+let currentAudio: HTMLAudioElement | null = null;
+
+export const normTTS = (t: string) => t.replace(/[\[\]]/g, "").replace(/\s+/g, " ").trim();
+
+function loadManifest() {
+  manifestP ??= import("@/content/tts-manifest.json")
+    .then((m) => (manifest = (m.default ?? m) as Record<string, string>))
+    .catch(() => (manifest = {}));
+  return manifestP;
+}
+
+export function hasNativeAudio(text: string) {
+  return !!manifest?.[normTTS(text)];
+}
+
+export function stopSpeaking() {
+  currentAudio?.pause();
+  currentAudio = null;
+  if (canSpeak()) window.speechSynthesis.cancel();
+}
+
+/** Speak text: native recording if bundled, otherwise the best installed browser voice. Returns a cancel function. */
 export function speak(text: string, opts: SpeakOptions = {}) {
+  let cancelled = false;
+  stopSpeaking();
+  loadManifest().then((m) => {
+    if (cancelled) return;
+    const id = m[normTTS(text)];
+    if (id) {
+      const a = new Audio(`/tts/${id}.m4a`);
+      a.playbackRate = opts.rate ?? 1;
+      (a as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
+      a.onended = () => !cancelled && opts.onend?.();
+      a.onerror = () => !cancelled && synthSpeak(text, opts, () => cancelled);
+      currentAudio = a;
+      a.play().catch(() => !cancelled && synthSpeak(text, opts, () => cancelled));
+      return;
+    }
+    synthSpeak(text, opts, () => cancelled);
+  });
+  return () => {
+    cancelled = true;
+    stopSpeaking();
+  };
+}
+
+function synthSpeak(text: string, opts: SpeakOptions, isCancelled: () => boolean) {
   if (!canSpeak()) {
     opts.onend?.();
-    return () => {};
+    return;
   }
   const synth = window.speechSynthesis;
-  let cancelled = false;
   synth.cancel();
   loadVoices().then((voices) => {
-    if (cancelled) return;
+    if (isCancelled()) return;
     const ranked = rankVoices(voices);
     const voice = (opts.voiceURI && voices.find((v) => v.voiceURI === opts.voiceURI)) || ranked[0];
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(normTTS(text));
     if (voice) {
       u.voice = voice;
       u.lang = voice.lang;
     } else u.lang = "en-US";
     u.rate = opts.rate ?? 1;
-    u.onend = () => !cancelled && opts.onend?.();
-    u.onerror = () => !cancelled && opts.onend?.();
+    u.onend = () => !isCancelled() && opts.onend?.();
+    u.onerror = () => !isCancelled() && opts.onend?.();
     synth.speak(u);
   });
-  return () => {
-    cancelled = true;
-    synth.cancel();
-  };
 }
