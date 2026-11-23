@@ -108,12 +108,13 @@ export function DatePicker({
             id={id}
             role="dialog"
             aria-label={label}
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="glass absolute left-0 right-0 z-50 mt-2 rounded-[24px] p-4 sm:right-auto sm:w-[340px]"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
           >
+            <div className="clay-sm mt-2 w-full max-w-[340px] !rounded-[22px] bg-surface p-4">
             <div className="flex items-center justify-between">
               <button type="button" className="icon-btn" aria-label="이전 달" onClick={() => setView(new Date(y, m - 1, 1))}>
                 <Icon name="back" size={16} />
@@ -145,12 +146,12 @@ export function DatePicker({
                     aria-pressed={d === value}
                     aria-label={d}
                     onClick={() => pick(d)}
-                    className={`num relative grid aspect-square place-items-center rounded-xl text-sm transition ${
+                    className={`num relative mx-auto grid h-10 w-10 place-items-center rounded-full text-sm transition ${
                       d === value
                         ? "bg-graphite-900 font-semibold text-lime"
                         : d === t
                           ? "font-semibold ring-[1.5px] ring-inset ring-glacier-600"
-                          : "hover:bg-white/70"
+                          : "hover:bg-glacier-200/60"
                     } ${disabled(d) ? "opacity-25" : ""} ${i % 7 === 0 && d !== value ? "text-rec/90" : ""}`}
                   >
                     {Number(d.slice(8))}
@@ -161,7 +162,7 @@ export function DatePicker({
               )}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-white/60 pt-3">
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-glacier-300/50 pt-3">
               {[14, 28, 56].map((n) => (
                 <button key={n} type="button" className="chip !cursor-pointer !py-1.5 hover:!bg-white" onClick={() => pick(addDays(t, n))}>
                   +{n / 7}주
@@ -179,6 +180,7 @@ export function DatePicker({
                   지우기
                 </button>
               )}
+            </div>
             </div>
           </motion.div>
         )}
