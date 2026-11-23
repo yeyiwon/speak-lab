@@ -48,9 +48,9 @@ src/
 
 ## 원어민 음성 (TTS)
 
-- 기본 제공 문장(117) · Part 3/4 질문 · 예시 답변은 **Kokoro-82M**(Apache-2.0, 오픈소스 뉴럴 TTS, 미국 여성 음성 `af_heart`)으로 미리 합성해 `public/tts/*.m4a`(AAC 56kbps)로 포함했습니다. API 키·런타임 비용 없음, 모든 브라우저에서 동일한 음질.
+- 기본 제공 문장(165) · Part 3/4 질문 · 예시 답변은 **Kokoro-82M**(Apache-2.0, 오픈소스 뉴럴 TTS, 미국 여성 음성 `af_heart`)으로 미리 합성해 `public/tts/*.m4a`(AAC 56kbps)로 포함했습니다. API 키·런타임 비용 없음, 모든 브라우저에서 동일한 음질.
 - `src/content/tts-manifest.json`이 정규화 텍스트 → 파일 id를 매핑하고, 목록에 없는 문장(사용자 등록)은 브라우저 speechSynthesis로 대체합니다.
-- 콘텐츠를 추가하면 음성을 다시 생성해야 합니다(생성 스크립트: `kokoro-js` + macOS `afconvert`).
+- 콘텐츠를 추가하면 음성을 다시 생성하세요: `cd scripts/tts && npm i && npx tsx dump.ts && node gen.mjs` (없는 파일만 생성, macOS `afconvert` 필요). 현재 217개 녹음.
 
 ## 디자인
 
@@ -65,7 +65,7 @@ src/
 
 - 시험 구성: ETS, *About the TOEIC Speaking and Writing Test* — https://www.ets.org/toeic/about/speaking-writing.html
 - 레벨 기준: ETS TOEIC Speaking Score Descriptors (Level 8: 190–200 … Level 4: 80–100)
-- 공개 강의: 시계토끼제니쌤 YouTube 채널 영상 10개 — 각 영상 제목·채널을 YouTube oEmbed로 검증. 파트별 구간은 영상 설명란의 공개 타임스탬프 사용.
+- 공개 강의: 시계토끼제니쌤 YouTube 채널 영상 41개(파트별 핵심강의·모의고사 해설·템플릿/만능문장 강의, 쇼츠·오픽·광고 제외) — 각 영상 제목·채널을 YouTube oEmbed로 검증. 파트별 구간은 영상 설명란의 공개 타임스탬프 사용.
 - 공식 학습 홈페이지: https://www.rabbitlearn.com/ (무료 PDF는 사용자가 직접 다운로드)
 
 ### 저작권 원칙

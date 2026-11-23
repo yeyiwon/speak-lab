@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Select } from "@/components/Select";
 import { motion } from "motion/react";
 import { useData } from "@/lib/data/store";
 import { PARTS, type PartNo } from "@/lib/types";
@@ -43,7 +44,7 @@ export function BulkImport({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/30 p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/45 p-3 backdrop-blur-[3px] sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div role="dialog" aria-modal="true" aria-label="여러 문장 붙여넣기" className="clay max-h-[92dvh] w-full max-w-2xl overflow-y-auto p-6 sm:p-7" initial={{ y: 30 }} animate={{ y: 0 }} exit={{ y: 30 }} onClick={(e) => e.stopPropagation()}>
         <p className="text-xl font-bold">내 문장 한 번에 등록</p>
         <p className="mt-1 text-sm text-ink-muted">
@@ -58,12 +59,7 @@ export function BulkImport({ onClose }: { onClose: () => void }) {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm font-semibold">
             파트
-            <select className="field !w-auto !min-h-[40px] !py-1.5" value={String(part)} onChange={(e) => setPart(e.target.value === "all" ? "all" : (Number(e.target.value) as PartNo))}>
-              <option value="all">공통</option>
-              {PARTS.map((p) => (
-                <option key={p} value={p}>Part {p}</option>
-              ))}
-            </select>
+            <Select size="sm" className="!w-36" label="파트" value={String(part)} onChange={(v) => setPart(v === "all" ? "all" : (Number(v) as PartNo))} options={[{ value: "all", label: "공통" }, ...PARTS.map((p) => ({ value: String(p), label: `Part ${p}` }))]} />
           </label>
           <span className="text-sm text-ink-muted">
             인식된 문장 <strong className="num text-ink">{items.length}</strong>개{items.some((x) => !x.ko) && " · 일부는 한국어 뜻 없음"}

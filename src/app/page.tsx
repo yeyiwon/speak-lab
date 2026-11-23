@@ -51,19 +51,19 @@ export default function TodayPage() {
         </Link>
       </div>
 
-      <h1 className="mt-2 max-w-2xl text-[2.1rem] font-bold leading-[1.08] tracking-tight sm:text-[3rem]">
-        {pct >= 100 ? (
-          <>오늘 계획 완료.<br />내일도 이어서 말해봐요.</>
-        ) : next ? (
-          <>
-            {next.item.kind === "speaking" ? `Part ${next.item.part}를` : next.item.kind === "lecture" ? "강의 하나를" : next.item.kind === "review" ? "막혔던 곳을" : "문장을"}
-            <br />
-            {next.item.kind === "speaking" ? "시간 안에 말해볼 차례예요." : next.item.kind === "lecture" ? "보고 정리할 차례예요." : next.item.kind === "review" ? "다시 풀어볼 차례예요." : "입으로 외울 차례예요."}
-          </>
-        ) : (
-          "오늘의 학습을 준비하고 있어요."
-        )}
-      </h1>
+      <h1 className="mt-2 text-[1.5rem] font-bold tracking-tight sm:text-[2rem]">
+  {pct >= 100
+    ? "오늘 학습 완료"
+    : next
+      ? next.item.kind === "speaking"
+        ? `Part ${next.item.part} 실전 연습`
+        : next.item.kind === "lecture"
+          ? "강의 학습"
+          : next.item.kind === "review"
+            ? "오답 복습"
+            : "학습"
+      : "오늘의 학습"}
+</h1>
 
       {/* Hero */}
       <section className="mt-8 grid gap-5 lg:grid-cols-[1.25fr_1fr]">

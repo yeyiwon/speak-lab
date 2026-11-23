@@ -43,3 +43,7 @@ next-env.d.ts
 # local tool caches
 .impeccable/
 .claude/
+
+# TTS tooling deps
+/scripts/tts/node_modules
+/scripts/tts/texts.json

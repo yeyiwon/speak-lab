@@ -57,7 +57,7 @@ function Studio() {
 
   return (
     <Page>
-      <PageHeader eyebrow="Speaking Studio" title={<>실제 시험 시간으로<br />입을 여는 연습.</>} />
+      <PageHeader eyebrow="Speaking Studio" title={"실전"} />
 
       <div role="tablist" aria-label="파트 선택" className="mt-8 flex gap-2 overflow-x-auto no-scrollbar pb-3 pt-1">
         {PARTS.map((p) => (
@@ -103,7 +103,7 @@ function Studio() {
               const n = attempts.filter((a) => a.setId === s.id).length;
               return (
                 <li key={s.id}>
-                  <button type="button" onClick={() => launch(s.id)} className="clay-sm group flex w-full items-center gap-4 p-5 text-left transition-transform hover:-translate-y-0.5">
+                  <button type="button" onClick={() => launch(s.id)} className="clay-sm group flex w-full items-center gap-4 p-5 text-left">
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{s.title}</span>

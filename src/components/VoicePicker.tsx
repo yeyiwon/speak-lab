@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Select } from "./Select";
 import { canSpeak, loadVoices, rankVoices, speak, voiceQualityLabel } from "@/lib/audio/sound";
 import type { Settings } from "@/lib/types";
 import { Icon } from "./Icon";
@@ -33,19 +34,7 @@ export function VoicePicker({ settings, onChange }: { settings: Settings; onChan
       ) : (
         <>
           <div className="mt-3 flex gap-2">
-            <select
-              className="field text-sm"
-              aria-label="음성 선택"
-              value={settings.voiceURI ?? ""}
-              onChange={(e) => onChange({ voiceURI: e.target.value || null })}
-            >
-              <option value="">자동 (추천: {best?.name})</option>
-              {voices.map((v) => (
-                <option key={v.voiceURI} value={v.voiceURI}>
-                  {v.name} · {v.lang} · {voiceQualityLabel(v)}
-                </option>
-              ))}
-            </select>
+            <Select size="sm" label="음성 선택" value={settings.voiceURI ?? ""} onChange={(v) => onChange({ voiceURI: v || null })} options={[{ value: "", label: `자동 (추천: ${best?.name ?? "—"})` }, ...voices.map((v) => ({ value: v.voiceURI, label: `${v.name} · ${v.lang}`, hint: voiceQualityLabel(v) }))]} />
             <button type="button" className="btn shrink-0" onClick={() => speak(SAMPLE, { voiceURI: current?.voiceURI, rate })} aria-label="선택한 음성 미리 듣기">
               <Icon name="speaker" size={18} /> 듣기
             </button>

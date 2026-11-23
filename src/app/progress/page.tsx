@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Select } from "@/components/Select";
 import { motion } from "motion/react";
 import { findQuestion } from "@/content/questions";
 import { AudioPlayer } from "@/components/AudioPlayer";
@@ -77,7 +78,7 @@ export default function ProgressPage() {
 
   return (
     <Page>
-      <PageHeader eyebrow="Progress" title={<>쌓인 만큼만,<br />정직하게 보여줘요.</>} />
+      <PageHeader eyebrow="Progress" title={"기록"} />
 
       <p className="clay-sunk mt-6 p-4 text-sm leading-relaxed text-ink-muted">
         <strong className="text-ink">측정값</strong>(학습 시간 · 문제 수 · 발화 감지 시간)과 <strong className="text-ink">자기 평가</strong>(내가 매긴 1–5)를 구분해 보여줍니다.
@@ -151,16 +152,7 @@ export default function ProgressPage() {
           <h2 id="cmp-h" className="text-lg font-bold">과거 녹음 비교</h2>
           {stats.comparable.length ? (
             <>
-              <select className="field mt-4 text-sm font-bold" aria-label="비교할 문제" value={q ?? ""} onChange={(e) => setCompareQ(e.target.value)}>
-                {stats.comparable.map((id) => {
-                  const f = findQuestion(id);
-                  return (
-                    <option key={id} value={id}>
-                      Part {f?.set.part} · Q{f?.question.qNo} · {f?.set.title}
-                    </option>
-                  );
-                })}
-              </select>
+              <Select className="mt-4" label="비교할 문제" value={q ?? ""} onChange={setCompareQ} options={stats.comparable.map((id) => { const f = findQuestion(id); return { value: id, label: `Part ${f?.set.part} · Q${f?.question.qNo} · ${f?.set.title}` }; })} />
               <div className="mt-4 grid gap-4">
                 {pair.map((a, i) => (
                   <div key={a.id}>

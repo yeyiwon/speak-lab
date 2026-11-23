@@ -91,6 +91,8 @@
 }
 
 html {
+  /* Reserve scrollbar space so pages don't shift sideways on Windows when height changes */
+  scrollbar-gutter: stable;
   background: var(--bg);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
@@ -593,12 +595,18 @@ h3 {
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  /* Windows "Transparency effects: off" turns this on. Only neutral surfaces go opaque —
+     filled buttons (primary / lime / glacier) keep their own colors. */
   .clay,
   .panel,
   .clay-sm,
-  .btn,
   .field {
-    background: var(--glacier-50);
+    background: #f7fafd;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .btn:not(.btn-primary):not(.btn-lime):not(.btn-glacier):not(.btn-ghost) {
+    background: #fff;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -673,4 +681,101 @@ h3 {
 .studio .field:focus {
   border-color: var(--glacier-200);
   box-shadow: none;
+}
+
+/* ───────── Button system (final) ─────────
+ * Explicit background-COLOR per variant (no gradients that a platform can drop),
+ * no blur on buttons, no hover lift. Press = tiny scale only.
+ */
+.btn {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: #fff;
+  color: var(--graphite-900);
+  box-shadow: 0 1px 2px rgba(28, 29, 31, 0.06), inset 0 0 0 1px rgba(28, 29, 31, 0.08);
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 120ms ease;
+}
+.btn:hover {
+  transform: none;
+  background: #f3f7fb;
+}
+.btn:active,
+.btn[aria-pressed="true"] {
+  transform: scale(0.98);
+  box-shadow: inset 0 0 0 1px rgba(28, 29, 31, 0.12);
+}
+.btn.btn-primary,
+.btn.btn-primary:hover,
+.btn.btn-primary:active {
+  background: #1c1d1f;
+  color: #f4f8fc;
+  box-shadow: 0 1px 2px rgba(28, 29, 31, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn.btn-primary:hover {
+  background: #303337;
+}
+.btn.btn-lime,
+.btn.btn-lime:hover {
+  background: #c8f169;
+  color: #1c1d1f;
+  box-shadow: 0 1px 2px rgba(28, 29, 31, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn.btn-lime:hover {
+  background: #d4f585;
+}
+.btn.btn-glacier,
+.btn.btn-glacier:hover {
+  background: #cfe3f5;
+  color: #1c1d1f;
+  box-shadow: inset 0 0 0 1px rgba(76, 111, 147, 0.12);
+}
+.btn.btn-glacier:hover {
+  background: #c2daf0;
+}
+.btn.btn-ghost {
+  background: transparent;
+  box-shadow: none;
+}
+.btn.btn-ghost:hover {
+  background: rgba(28, 29, 31, 0.05);
+}
+.btn:disabled {
+  opacity: 0.4;
+}
+/* Studio (dark) */
+.studio .btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glacier-100);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+.studio .btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.studio .btn.btn-primary,
+.studio .btn.btn-primary:hover {
+  background: #cfe3f5;
+  color: #1c1d1f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.studio .btn.btn-primary:hover {
+  background: #e1edf9;
+}
+.studio .btn.btn-ghost {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Dialog sheets are solid — content behind must never show through */
+[role="dialog"].clay,
+.clay[role="dialog"],
+[role="dialog"] > .clay {
+  background: #fbfdff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 24px 60px -20px rgba(28, 29, 31, 0.45), inset 0 0 0 1px rgba(28, 29, 31, 0.06);
+}
+
+/* Radix select rows use their own highlight instead of the global focus ring */
+[role="option"]:focus-visible {
+  outline: none;
 }

@@ -34,7 +34,7 @@ export default function ReviewPage() {
 
   return (
     <Page>
-      <PageHeader eyebrow="Review" title={<>막혔던 곳만<br />다시, 정확하게.</>} />
+      <PageHeader eyebrow="Review" title={"복습"} />
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         {/* Failed sentences */}

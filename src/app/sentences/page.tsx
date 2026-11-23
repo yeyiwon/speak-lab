@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { Select } from "@/components/Select";
 import { Suspense, useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Icon } from "@/components/Icon";
@@ -64,7 +65,7 @@ function Sentences() {
 
   return (
     <Page>
-      <PageHeader eyebrow="Sentence Trainer" title={<>읽을 수 있는 문장을<br />말할 수 있는 문장으로.</>}>
+      <PageHeader eyebrow="Sentence Trainer" title={"문장"}>
         <button type="button" className="btn" onClick={() => setBulk(true)}>
           여러 문장 붙여넣기
         </button>
@@ -108,7 +109,7 @@ function Sentences() {
           <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
             {MODES.map((m, i) => (
               <li key={m.id}>
-                <button type="button" onClick={() => router.push(`/sentences?train=${m.id}`)} className="clay-sm flex w-full items-start gap-3 p-4 text-left transition-transform hover:-translate-y-0.5">
+                <button type="button" onClick={() => router.push(`/sentences?train=${m.id}`)} className="clay-sm flex w-full items-start gap-3 p-4 text-left">
                   <span className="num grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-glacier-200 text-sm font-bold">{i + 1}</span>
                   <span>
                     <span className="block text-sm font-semibold">{m.label}</span>
@@ -123,19 +124,8 @@ function Sentences() {
 
       <section className="mt-10">
         <div className="flex flex-wrap items-center gap-2">
-          <select aria-label="파트 필터" className="field !w-auto !min-h-[40px] !py-1.5 text-sm font-bold" value={String(part)} onChange={(e) => setPart(e.target.value === "any" || e.target.value === "all" ? (e.target.value as "any" | "all") : (Number(e.target.value) as PartNo))}>
-            <option value="any">모든 파트</option>
-            <option value="all">공통</option>
-            {PARTS.map((p) => (
-              <option key={p} value={p}>Part {p}</option>
-            ))}
-          </select>
-          <select aria-label="상태 필터" className="field !w-auto !min-h-[40px] !py-1.5 text-sm font-bold" value={status} onChange={(e) => setStatus(e.target.value as SimpleStatus | "any")}>
-            <option value="any">모든 상태</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{SIMPLE_LABEL[s]}</option>
-            ))}
-          </select>
+          <Select size="sm" className="!w-36" label="파트 필터" value={String(part)} onChange={(v) => setPart(v === "any" || v === "all" ? (v as "any" | "all") : (Number(v) as PartNo))} options={[{ value: "any", label: "모든 파트" }, { value: "all", label: "공통" }, ...PARTS.map((p) => ({ value: String(p), label: `Part ${p}` }))]} />
+          <Select size="sm" className="!w-36" label="상태 필터" value={status} onChange={(v) => setStatus(v as SimpleStatus | "any")} options={[{ value: "any", label: "모든 상태" }, ...STATUSES.map((s) => ({ value: s, label: SIMPLE_LABEL[s] }))]} />
           <span className="text-sm text-ink-muted">{filtered.length}문장</span>
         </div>
 

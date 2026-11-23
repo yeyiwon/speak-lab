@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Select } from "@/components/Select";
 import { motion } from "motion/react";
 import { Icon } from "@/components/Icon";
 import { useData } from "@/lib/data/store";
@@ -32,7 +33,7 @@ export function SentenceEditor({ initial, onClose, materialId }: { initial: Sent
   }
 
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/30 p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/45 p-3 backdrop-blur-[3px] sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.form
         role="dialog"
         aria-modal="true"
@@ -60,21 +61,11 @@ export function SentenceEditor({ initial, onClose, materialId }: { initial: Sent
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-sm font-semibold">파트</span>
-            <select className="field mt-2" value={String(part)} onChange={(e) => setPart(e.target.value === "all" ? "all" : (Number(e.target.value) as PartNo))}>
-              <option value="all">공통</option>
-              {PARTS.map((p) => (
-                <option key={p} value={p}>Part {p}</option>
-              ))}
-            </select>
+            <Select className="mt-2" label="파트" value={String(part)} onChange={(v) => setPart(v === "all" ? "all" : (Number(v) as PartNo))} options={[{ value: "all", label: "공통" }, ...PARTS.map((p) => ({ value: String(p), label: `Part ${p}` }))]} />
           </label>
           <label className="block">
             <span className="text-sm font-semibold">연결 자료</span>
-            <select className="field mt-2" value={mat} onChange={(e) => setMat(e.target.value)}>
-              <option value="">없음</option>
-              {data?.materials.map((m) => (
-                <option key={m.id} value={m.id}>{m.title.slice(0, 30)}</option>
-              ))}
-            </select>
+            <Select className="mt-2" label="연결 자료" value={mat} onChange={setMat} options={[{ value: "", label: "없음" }, ...(data?.materials ?? []).map((m) => ({ value: m.id, label: m.title.slice(0, 34) }))]} />
           </label>
         </div>
         <label className="mt-4 block">

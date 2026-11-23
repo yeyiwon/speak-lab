@@ -29,7 +29,7 @@ export function Onboarding() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/30 p-3 backdrop-blur-[2px] sm:items-center"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/45 p-3 backdrop-blur-[3px] backdrop-blur-[2px] sm:items-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         role="dialog"
@@ -44,12 +44,10 @@ export function Onboarding() {
         >
           <p className="eyebrow">Welcome to SPEAK LAB</p>
           <h1 id="ob-title" className="mt-2 text-[1.7rem] font-bold leading-tight tracking-tight">
-            목표만 알려주세요.
-            <br />
-            오늘 할 공부는 앱이 정할게요.
+            목표
           </h1>
 
-          <fieldset className="mt-7">
+          <fieldset className="mt-2">
             <legend className="text-sm font-semibold">목표 레벨 <span className="font-semibold text-ink-muted">(ETS 공식 레벨 · 점수)</span></legend>
             <div className="mt-3 grid grid-cols-5 gap-2">
               {LEVELS.map((l) => (

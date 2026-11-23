@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Select } from "@/components/Select";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
@@ -28,27 +29,23 @@ function Library() {
   const { data } = useData();
   const params = useSearchParams();
   const [filter, setFilter] = useState<Filter>("any");
-  const [openId, setOpenId] = useState<string | null>(params.get("open"));
-  const [adding, setAdding] = useState(false);
-  const [jump, setJump] = useState(0);
-
-  useEffect(() => {
+  const [viewer, setViewer] = useState<{ id: string; start: number } | null>(() => {
     const id = params.get("open");
-    if (id) {
-      setTimeout(() => document.getElementById(`m-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
-    }
-  }, [params]);
+    return id ? { id, start: 0 } : null;
+  });
+  const [adding, setAdding] = useState(false);
 
   if (!data) return null;
-  const materials = (data?.materials ?? [])
+  const materials = data.materials
     .filter((m) => (filter === "any" ? true : filter === "bookmarked" ? m.bookmarked : m.part === filter))
     .sort((a, b) => Number(a.done) - Number(b.done) || a.order - b.order);
-  const total = data?.materials.length ?? 0;
-  const doneCount = data?.materials.filter((m) => m.done).length ?? 0;
+  const total = data.materials.length;
+  const doneCount = data.materials.filter((m) => m.done).length;
+  const viewing = viewer ? data.materials.find((m) => m.id === viewer.id) : undefined;
 
   return (
     <Page>
-      <PageHeader eyebrow="Library" title={<>강의를 보고,<br />바로 내 문장으로.</>}>
+      <PageHeader eyebrow="Library" title={"자료"}>
         <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
           <Icon name="plus" size={18} /> 자료 등록
         </button>
@@ -65,213 +62,247 @@ function Library() {
           공식 학습 홈페이지
         </a>
       </div>
-
       <p className="mt-2 px-1 text-xs text-ink-muted">{FREE_MATERIALS_NOTE}</p>
 
-      <Guide
-        onJump={(t) => {
-          setJump(t);
-          setOpenId("yt-ZjD5JSezau8");
-          setTimeout(() => document.getElementById("m-yt-ZjD5JSezau8")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
-        }}
-      />
+      <Guide onJump={(t) => setViewer({ id: "yt-ZjD5JSezau8", start: t })} />
 
       <h2 className="mt-12 text-xl font-bold">강의 목록</h2>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-1" role="tablist" aria-label="자료 분류">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2 pt-1" role="tablist" aria-label="자료 분류">
           {(["any", ...PARTS, "all", "bookmarked"] as Filter[]).map((f) => (
             <button
               key={String(f)}
               role="tab"
               aria-selected={filter === f}
               onClick={() => setFilter(f)}
-              className={`btn shrink-0 !min-h-[40px] !text-sm ${filter === f ? "!bg-graphite-900 !text-glacier-50" : ""}`}
+              className={`btn shrink-0 !min-h-[38px] !text-sm ${filter === f ? "!bg-graphite-900 !text-glacier-50" : ""}`}
             >
               {f === "any" ? "전체" : f === "all" ? "전 파트" : f === "bookmarked" ? "북마크" : `Part ${f}`}
             </button>
           ))}
         </div>
-        <span className="num hidden shrink-0 text-sm font-bold text-ink-muted sm:block">
+        <span className="num hidden shrink-0 text-sm font-semibold text-ink-muted sm:block">
           {doneCount}/{total} 완료
         </span>
       </div>
 
-      {materials.length === 0 ? (
-        <div className="mt-4">
+      {/* Fixed minimum height: switching to a short filter must not yank the page upward. */}
+      <div className="mt-4 min-h-[560px]">
+        {materials.length === 0 ? (
           <Empty title="이 분류에 자료가 없어요">자료 등록으로 직접 공부하는 강의 링크를 추가할 수 있어요.</Empty>
-        </div>
-      ) : (
-        <ul className="panel mt-4 grid grid-cols-[minmax(0,1fr)]">
-          {materials.map((m) => (
-            <MaterialRow
-              key={m.id === "yt-ZjD5JSezau8" ? `${m.id}-${jump}` : m.id}
-              m={m}
-              initialStart={m.id === "yt-ZjD5JSezau8" ? jump : 0}
-              open={openId === m.id}
-              onToggle={() => setOpenId(openId === m.id ? null : m.id)}
-            />
-          ))}
-        </ul>
-      )}
+        ) : (
+          <ul className="panel grid grid-cols-[minmax(0,1fr)]">
+            {materials.map((m) => (
+              <MaterialRow key={m.id} m={m} onOpen={() => setViewer({ id: m.id, start: 0 })} />
+            ))}
+          </ul>
+        )}
+      </div>
 
+      <AnimatePresence>{viewing && <LectureSheet key={viewing.id + viewer!.start} m={viewing} start={viewer!.start} onClose={() => setViewer(null)} />}</AnimatePresence>
       <AnimatePresence>{adding && <AddMaterial onClose={() => setAdding(false)} />}</AnimatePresence>
     </Page>
   );
 }
 
-function MaterialRow({ m, open, onToggle, initialStart = 0 }: { m: Material; open: boolean; onToggle: () => void; initialStart?: number }) {
+/** One quiet row: status, title, meta, and a single chevron — the details open in a sheet. */
+function MaterialRow({ m, onOpen }: { m: Material; onOpen: () => void }) {
+  const { data } = useData();
+  const linked = (data?.sentences ?? []).filter((s) => m.sentenceIds.includes(s.id) || s.materialId === m.id).length;
+  return (
+    <li>
+      <button type="button" onClick={onOpen} className="row-hover group flex w-full items-center gap-4 px-5 py-4 text-left sm:px-6">
+        <span
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${m.done ? "bg-graphite-900 text-lime" : "bg-glacier-100 text-glacier-600"}`}
+          aria-label={m.done ? "공부 완료" : "아직 안 봄"}
+        >
+          <Icon name={m.done ? "check" : "play"} size={m.done ? 16 : 13} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className={`block truncate font-semibold ${m.done ? "text-ink-muted" : ""}`}>{m.title}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+            <SourceTag origin={m.origin} />
+            <span className="chip">{m.part === "all" ? "전 파트" : `Part ${m.part}`}</span>
+            {m.chapters?.length ? <span className="chip">구간 {m.chapters.length}</span> : null}
+            {linked > 0 && <span className="chip">문장 {linked}</span>}
+            {m.bookmarked && <span className="chip chip-dark">북마크</span>}
+          </span>
+        </span>
+        <Icon name="arrow" size={16} className="shrink-0 text-ink-muted transition-transform group-hover:translate-x-0.5" />
+      </button>
+    </li>
+  );
+}
+
+/** Lecture viewer: solid sheet with video, chapter jumps, actions, memo and linked sentences. */
+function LectureSheet({ m, start: initialStart, onClose }: { m: Material; start: number; onClose: () => void }) {
   const { data, actions } = useData();
-  const [addSentence, setAddSentence] = useState(false);
   const [start, setStart] = useState(initialStart);
+  const [addSentence, setAddSentence] = useState(false);
   const vid = youtubeId(m.url);
   const linked = (data?.sentences ?? []).filter((s) => m.sentenceIds.includes(s.id) || s.materialId === m.id);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !addSentence && onClose();
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose, addSentence]);
+
+  const fmt = (t: number) =>
+    `${Math.floor(t / 3600) ? `${Math.floor(t / 3600)}:` : ""}${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+
   return (
-    <li id={`m-${m.id}`}>
-      <div className={`row-hover flex items-center gap-3 py-4 pl-4 pr-4 sm:gap-5 sm:pl-6 sm:pr-8 ${open ? "bg-white/40" : ""}`}>
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={m.done}
-          aria-label={m.done ? "공부 완료 취소" : "오늘 공부 완료로 표시"}
-          onClick={() => actions.markStudied(m.id, !m.done)}
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition-colors ${m.done ? "bg-graphite-900 text-lime" : "text-glacier-400 ring-[1.5px] ring-inset ring-glacier-300 hover:ring-glacier-600"}`}
-        >
-          {m.done && (
-            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 16 }}>
-              <Icon name="check" size={18} />
-            </motion.span>
-          )}
-        </button>
-        <button type="button" className="min-w-0 flex-1 text-left" aria-expanded={open} onClick={onToggle}>
-          <span className={`block font-semibold leading-snug ${m.done ? "text-ink-muted" : ""}`}>{m.title}</span>
-          <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
-            <SourceTag origin={m.origin} />
-            <span className="chip">{m.part === "all" ? "전 파트" : `Part ${m.part}`}</span>
-            {linked.length > 0 && <span className="chip">문장 {linked.length}</span>}
-            <span className="hidden sm:inline">
-            {m.channel}
-            {m.verifiedAt && ` · ${m.verifiedAt} 확인`}
-            {m.studiedDates.length > 0 && ` · 마지막 공부 ${formatKDate(m.studiedDates[m.studiedDates.length - 1])}`}
-            </span>
-          </span>
-        </button>
-        <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-white/50 p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7)]">
-        <button
-          type="button"
-          className={`icon-btn !h-9 !w-9 !rounded-full ${m.bookmarked ? "text-graphite-900" : "text-glacier-600"}`}
-          aria-pressed={m.bookmarked}
-          aria-label="북마크"
-          onClick={() => actions.saveMaterial({ ...m, bookmarked: !m.bookmarked })}
-        >
-          <Icon name="bookmark" size={18} fill={m.bookmarked ? "currentColor" : "none"} />
-        </button>
-        <button type="button" className="icon-btn !h-9 !w-9 !rounded-full text-ink-muted" aria-label={open ? "접기" : "펼치기"} aria-expanded={open} onClick={onToggle}>
-          <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.25 }}>
-            <Icon name="chev" size={18} />
-          </motion.span>
-        </button>
-        </div>
-      </div>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
-            <div className="grid gap-6 bg-white/40 px-4 pb-6 pt-2 sm:px-8 lg:grid-cols-[1.3fr_1fr]">
-              <div>
-                {vid ? (
-                  <div className="clay-sunk overflow-hidden !rounded-[20px] p-1.5">
-                    <iframe
-                      className="aspect-video w-full rounded-[16px]"
-                      key={start}
-                      src={`https://www.youtube-nocookie.com/embed/${vid}${start ? `?start=${start}&autoplay=1` : ""}`}
-                      title={m.title}
-                      loading="lazy"
-                      allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : (
-                  <p className="clay-sunk p-4 text-sm text-ink-muted">임베드할 수 없는 링크예요. 아래 버튼으로 원본에서 열어주세요.</p>
-                )}
-                {m.chapters?.length ? (
-                  <div className="mt-3">
-                    <p className="text-xs font-bold text-ink-muted">파트별 구간 바로 재생 (영상 설명란 타임스탬프)</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {m.chapters.map((c) => (
-                        <button key={c.t} type="button" aria-pressed={start === c.t} className={`btn !min-h-[36px] !px-3 !text-xs ${start === c.t ? "!bg-graphite-900 !text-glacier-50" : ""}`} onClick={() => setStart(c.t)}>
-                          {c.label}
-                          <span className="num font-semibold opacity-60">
-                            {Math.floor(c.t / 3600) ? `${Math.floor(c.t / 3600)}:` : ""}
-                            {String(Math.floor((c.t % 3600) / 60)).padStart(2, "0")}:{String(c.t % 60).padStart(2, "0")}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <a className="btn !min-h-[40px] !text-sm" href={m.url} target="_blank" rel="noreferrer">
-                    <Icon name="ext" size={16} /> 원본에서 보기
-                  </a>
-                  {!m.done && (
-                    <button type="button" className="btn btn-primary !min-h-[40px] !text-sm" onClick={() => actions.markStudied(m.id, true)}>
-                      <Icon name="check" size={16} /> 오늘 공부 완료
-                    </button>
-                  )}
-                  {m.origin === "user" && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost !min-h-[40px] !text-sm text-rec"
-                      onClick={() => confirm("이 자료를 삭제할까요? 연결된 문장은 남습니다.") && actions.removeMaterial(m.id)}
-                    >
-                      <Icon name="trash" size={16} /> 삭제
-                    </button>
-                  )}
-                </div>
-                <p className="mt-2 text-[0.7rem] text-ink-muted">외부 영상 재생 시간은 측정하지 않아요. 완료 표시만 기록됩니다.</p>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <label className="block">
-                  <span className="text-sm font-semibold">내 메모</span>
-                  <textarea
-                    className="field mt-2 min-h-[110px] resize-y text-sm"
-                    placeholder="핵심 포인트, 타임스탬프, 헷갈린 부분…"
-                    defaultValue={m.note}
-                    onBlur={(e) => e.target.value !== m.note && actions.saveMaterial({ ...m, note: e.target.value })}
-                  />
-                </label>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">연결된 암기 문장</span>
-                    <button type="button" className="btn btn-ghost !min-h-[36px] !px-2 !text-xs" onClick={() => setAddSentence(true)}>
-                      <Icon name="plus" size={14} /> 이 강의에서 문장 추가
-                    </button>
-                  </div>
-                  {linked.length ? (
-                    <ul className="mt-2 grid gap-2">
-                      {linked.map((s) => (
-                        <li key={s.id} className="clay-sunk p-3 text-sm">
-                          <p className="font-bold">{s.en}</p>
-                          <p className="text-xs text-ink-muted">{s.ko}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-xs text-ink-muted">강의에서 배운 문장을 연결하면 문장 트레이너에서 바로 복습돼요.</p>
-                  )}
-                </div>
-                {m.studiedDates.length > 0 && (
-                  <p className="text-xs text-ink-muted">공부한 날: {m.studiedDates.map((d) => d.slice(5)).join(", ")}</p>
-                )}
-              </div>
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/45 backdrop-blur-[3px] sm:items-center sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={m.title}
+        className="clay max-h-[94dvh] w-full max-w-4xl overflow-y-auto !rounded-b-none sm:!rounded-[26px]"
+        initial={{ y: 24, opacity: 0.6 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 24, opacity: 0 }}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-4 px-6 pb-4 pt-6 sm:px-8">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap gap-1.5">
+              <SourceTag origin={m.origin} />
+              <span className="chip">{m.part === "all" ? "전 파트" : `Part ${m.part}`}</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>{addSentence && <SentenceEditor initial={null} materialId={m.id} onClose={() => setAddSentence(false)} />}</AnimatePresence>
-    </li>
+            <h2 className="mt-2 text-lg font-bold leading-snug sm:text-xl">{m.title}</h2>
+            <p className="mt-1 text-xs text-ink-muted">
+              {m.channel}
+              {m.verifiedAt && ` · ${m.verifiedAt} 확인`}
+              {m.studiedDates.length > 0 && ` · 마지막 공부 ${formatKDate(m.studiedDates[m.studiedDates.length - 1])}`}
+            </p>
+          </div>
+          <button type="button" className="icon-btn" aria-label="닫기" onClick={onClose}>
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+
+        <div className="grid gap-6 px-6 pb-7 sm:px-8 lg:grid-cols-[1.45fr_1fr]">
+          <div>
+            {vid ? (
+              <iframe
+                key={start}
+                className="aspect-video w-full rounded-2xl bg-graphite-900"
+                src={`https://www.youtube-nocookie.com/embed/${vid}${start ? `?start=${start}&autoplay=1` : ""}`}
+                title={m.title}
+                loading="lazy"
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+            ) : (
+              <p className="clay-sunk p-4 text-sm text-ink-muted">임베드할 수 없는 링크예요. 원본에서 열어주세요.</p>
+            )}
+            {m.chapters?.length ? (
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-ink-muted">파트별 구간 바로 재생</p>
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {m.chapters.map((c) => (
+                    <button
+                      key={c.t}
+                      type="button"
+                      aria-pressed={start === c.t}
+                      onClick={() => setStart(c.t)}
+                      className={`flex flex-col items-center rounded-xl py-2 text-xs transition-colors ${
+                        start === c.t ? "bg-graphite-900 text-glacier-50" : "bg-glacier-100 text-ink hover:bg-glacier-200"
+                      }`}
+                    >
+                      <span className="font-semibold">{c.label}</span>
+                      <span className="num opacity-60">{fmt(c.t)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`btn !min-h-[42px] !text-sm ${m.done ? "" : "btn-primary"}`}
+                onClick={() => actions.markStudied(m.id, !m.done)}
+              >
+                <Icon name="check" size={16} /> {m.done ? "완료 취소" : "오늘 공부 완료"}
+              </button>
+              <button
+                type="button"
+                className="btn !min-h-[42px] !text-sm"
+                aria-pressed={m.bookmarked}
+                onClick={() => actions.saveMaterial({ ...m, bookmarked: !m.bookmarked })}
+              >
+                <Icon name="bookmark" size={16} fill={m.bookmarked ? "currentColor" : "none"} /> {m.bookmarked ? "북마크됨" : "북마크"}
+              </button>
+              <a className="btn btn-ghost !min-h-[42px] !text-sm" href={m.url} target="_blank" rel="noreferrer">
+                <Icon name="ext" size={16} /> 원본
+              </a>
+              {m.origin === "user" && (
+                <button
+                  type="button"
+                  className="btn btn-ghost !min-h-[42px] !text-sm text-rec"
+                  onClick={() => {
+                    if (confirm("이 자료를 삭제할까요? 연결된 문장은 남습니다.")) {
+                      actions.removeMaterial(m.id);
+                      onClose();
+                    }
+                  }}
+                >
+                  <Icon name="trash" size={16} /> 삭제
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-[0.7rem] text-ink-muted">외부 영상 재생 시간은 측정하지 않아요. 완료 표시만 기록됩니다.</p>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <label className="block">
+              <span className="text-sm font-semibold">내 메모</span>
+              <textarea
+                className="field mt-2 min-h-[120px] resize-y text-sm"
+                placeholder="핵심 포인트, 타임스탬프, 헷갈린 부분…"
+                defaultValue={m.note}
+                onBlur={(e) => e.target.value !== m.note && actions.saveMaterial({ ...m, note: e.target.value })}
+              />
+            </label>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">연결된 암기 문장</span>
+                <button type="button" className="btn btn-ghost !min-h-[34px] !px-2.5 !text-xs" onClick={() => setAddSentence(true)}>
+                  <Icon name="plus" size={14} /> 문장 추가
+                </button>
+              </div>
+              {linked.length ? (
+                <ul className="mt-2 grid gap-2">
+                  {linked.map((s) => (
+                    <li key={s.id} className="rounded-xl bg-glacier-100/70 px-3.5 py-2.5 text-sm">
+                      <p className="font-semibold">{s.en}</p>
+                      <p className="text-xs text-ink-muted">{s.ko}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-xs text-ink-muted">강의에서 배운 문장을 추가하면 문장 연습에 바로 들어가요.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      <div onClick={(e) => e.stopPropagation()}>
+        <AnimatePresence>{addSentence && <SentenceEditor initial={null} materialId={m.id} onClose={() => setAddSentence(false)} />}</AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 
@@ -297,7 +328,7 @@ function AddMaterial({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/30 p-3 sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-graphite-900/45 p-3 backdrop-blur-[3px] sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.form
         role="dialog"
         aria-modal="true"
@@ -325,12 +356,7 @@ function AddMaterial({ onClose }: { onClose: () => void }) {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-sm font-semibold">파트</span>
-            <select className="field mt-2" value={String(part)} onChange={(e) => setPart(e.target.value === "all" ? "all" : (Number(e.target.value) as PartNo))}>
-              <option value="all">전 파트</option>
-              {PARTS.map((p) => (
-                <option key={p} value={p}>Part {p}</option>
-              ))}
-            </select>
+            <Select className="mt-2" label="파트" value={String(part)} onChange={(v) => setPart(v === "all" ? "all" : (Number(v) as PartNo))} options={[{ value: "all", label: "전 파트" }, ...PARTS.map((p) => ({ value: String(p), label: `Part ${p}` }))]} />
           </label>
           <label className="block">
             <span className="text-sm font-semibold">출처</span>

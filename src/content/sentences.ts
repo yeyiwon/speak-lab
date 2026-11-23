@@ -153,3 +153,66 @@ export const SEED_SENTENCES_V3: Seed[] = [
   T("s3-all-4", "all", "As far as I know, it's very popular in Korea.", "제가 알기로는 한국에서 매우 인기가 많습니다.", ["As far as I know", "popular"]),
   T("s3-all-5", "all", "That's pretty much it.", "대략 그 정도입니다. (답변 마무리)", ["pretty much it"]),
 ];
+
+/** v4 — topic-based expressions for frequent TOEIC Speaking themes (original SPEAK LAB writing). */
+export const SEED_SENTENCES_V4: Seed[] = [
+  // Shopping · 쇼핑
+  T("s4-shop-1", 3, "I usually shop online because I can compare prices in just a few minutes.", "몇 분 만에 가격을 비교할 수 있어서 보통 온라인으로 쇼핑해요.", ["shop online", "compare prices"]),
+  T("s4-shop-2", 3, "I prefer to buy clothes in person, so I can try them on first.", "먼저 입어볼 수 있어서 옷은 직접 가서 사는 걸 선호해요.", ["in person", "try them on"]),
+  T("s4-shop-3", 3, "There is a big shopping mall near my office, so I go there after work.", "회사 근처에 큰 쇼핑몰이 있어서 퇴근 후에 가요.", ["near my office", "after work"]),
+  T("s4-shop-4", 3, "I always read customer reviews before I make a purchase.", "구매하기 전에 항상 고객 후기를 읽어요.", ["customer reviews", "make a purchase"]),
+  // Travel · 여행
+  T("s4-trav-1", 3, "The last trip I took was to Jeju Island with my family last summer.", "마지막 여행은 작년 여름 가족과 간 제주도였어요.", ["The last trip", "last summer"]),
+  T("s4-trav-2", 3, "When I travel, I usually book a hotel that is close to the main attractions.", "여행할 때는 보통 주요 관광지와 가까운 호텔을 예약해요.", ["book a hotel", "close to"]),
+  T("s4-trav-3", 3, "I like to plan everything in advance so that I don't waste any time.", "시간을 낭비하지 않으려고 모든 걸 미리 계획하는 걸 좋아해요.", ["in advance", "waste any time"]),
+  T("s4-trav-4", 5, "Traveling abroad helps people understand different cultures.", "해외여행은 사람들이 다른 문화를 이해하는 데 도움이 됩니다.", ["abroad", "different cultures"]),
+  // Transportation · 교통
+  T("s4-tran-1", 3, "I take the subway to work because it's fast and never gets stuck in traffic.", "빠르고 교통 체증이 없어서 지하철로 출근해요.", ["take the subway", "stuck in traffic"]),
+  T("s4-tran-2", 3, "It takes about forty minutes to get to my office from my house.", "집에서 회사까지 약 40분 걸려요.", ["It takes about", "get to"]),
+  T("s4-tran-3", 5, "If public transportation were cheaper, more people would leave their cars at home.", "대중교통이 더 저렴하다면 더 많은 사람들이 차를 두고 다닐 거예요.", ["public transportation", "leave their cars"]),
+  // Work · 직장
+  T("s4-work-1", 5, "Working in a team teaches people how to solve problems together.", "팀으로 일하면 함께 문제를 해결하는 법을 배워요.", ["Working in a team", "solve problems"]),
+  T("s4-work-2", 5, "A flexible schedule allows employees to balance work and personal life.", "유연한 근무 일정은 직원들이 일과 개인 생활의 균형을 맞추게 해줍니다.", ["flexible schedule", "balance"]),
+  T("s4-work-3", 5, "Regular feedback from a manager can help new employees improve quickly.", "관리자의 정기적인 피드백은 신입 직원이 빠르게 성장하도록 도울 수 있어요.", ["Regular feedback", "improve quickly"]),
+  T("s4-work-4", 5, "Companies should provide training programs for their employees.", "회사는 직원들을 위한 교육 프로그램을 제공해야 합니다.", ["provide", "training programs"]),
+  T("s4-work-5", 4, "The orientation will take place in the main conference room on the second floor.", "오리엔테이션은 2층 대회의실에서 진행될 예정입니다.", ["take place", "conference room"]),
+  // Technology · 기술
+  T("s4-tech-1", 3, "I use my smartphone for almost everything, from banking to shopping.", "은행 업무부터 쇼핑까지 거의 모든 걸 스마트폰으로 해요.", ["almost everything", "from banking to shopping"]),
+  T("s4-tech-2", 5, "Technology has made our lives much more convenient than before.", "기술은 우리 삶을 예전보다 훨씬 편리하게 만들었어요.", ["has made", "convenient"]),
+  T("s4-tech-3", 5, "However, spending too much time on screens can be bad for our health.", "하지만 화면 앞에서 너무 많은 시간을 보내는 건 건강에 나쁠 수 있어요.", ["However", "on screens"]),
+  T("s4-tech-4", 5, "Online meetings save time because people don't have to travel.", "이동할 필요가 없어서 온라인 회의는 시간을 아껴줘요.", ["Online meetings", "don't have to travel"]),
+  // Health · 건강
+  T("s4-heal-1", 3, "I try to walk at least thirty minutes a day to stay in shape.", "건강을 유지하려고 하루에 최소 30분은 걸으려고 해요.", ["at least", "stay in shape"]),
+  T("s4-heal-2", 3, "Getting enough sleep is the most important thing for my health.", "충분히 자는 것이 제 건강에 가장 중요해요.", ["enough sleep", "most important"]),
+  T("s4-heal-3", 5, "People who exercise regularly tend to be more productive at work.", "규칙적으로 운동하는 사람들은 업무 생산성이 더 높은 경향이 있어요.", ["exercise regularly", "tend to be"]),
+  // Free time · 여가
+  T("s4-free-1", 3, "On weekends, I usually relax at home and watch movies.", "주말에는 보통 집에서 쉬면서 영화를 봐요.", ["On weekends", "relax at home"]),
+  T("s4-free-2", 3, "I recently started learning how to cook, and it's a lot of fun.", "최근에 요리를 배우기 시작했는데 정말 재미있어요.", ["recently started", "a lot of fun"]),
+  T("s4-free-3", 3, "Reading books is a great way to relieve stress after a long day.", "긴 하루 끝에 책 읽기는 스트레스를 풀기 좋은 방법이에요.", ["great way to", "after a long day"]),
+  // Education · 교육
+  T("s4-edu-1", 5, "Students can learn practical skills through internships.", "학생들은 인턴십을 통해 실무 능력을 배울 수 있어요.", ["practical skills", "through internships"]),
+  T("s4-edu-2", 5, "Learning a foreign language opens up more job opportunities.", "외국어를 배우면 더 많은 취업 기회가 열려요.", ["foreign language", "job opportunities"]),
+  T("s4-edu-3", 5, "Teachers play an important role in shaping students' future.", "선생님은 학생들의 미래를 만드는 데 중요한 역할을 해요.", ["play an important role", "shaping"]),
+  // Picture extras · 사진 묘사
+  T("s4-pic-1", 2, "A woman in a long coat is pushing a shopping cart.", "긴 코트를 입은 여자가 쇼핑 카트를 밀고 있어요.", ["in a long coat", "pushing"]),
+  T("s4-pic-2", 2, "Two men are shaking hands in front of a building.", "두 남자가 건물 앞에서 악수하고 있어요.", ["shaking hands", "in front of"]),
+  T("s4-pic-3", 2, "A man is reaching for a book on the top shelf.", "한 남자가 맨 위 선반의 책을 집으려고 손을 뻗고 있어요.", ["reaching for", "top shelf"]),
+  T("s4-pic-4", 2, "Several cars are parked on the side of the road.", "여러 대의 차가 길가에 주차되어 있어요.", ["Several cars", "side of the road"]),
+  T("s4-pic-5", 2, "A group of people are sitting around a table and having lunch.", "한 무리의 사람들이 테이블에 둘러앉아 점심을 먹고 있어요.", ["sitting around", "having lunch"]),
+  T("s4-pic-6", 2, "The sky is clear, so it seems like a nice day to go outside.", "하늘이 맑아서 밖에 나가기 좋은 날 같아요.", ["The sky is clear", "nice day"]),
+  // Info table extras · 정보 제공
+  T("s4-info-1", 4, "The keynote speech will be given by Dr. Kim at 9:30 a.m.", "기조연설은 오전 9시 30분에 김 박사님이 하실 예정입니다.", ["keynote speech", "will be given by"]),
+  T("s4-info-2", 4, "Participants can sign up on our website until Friday.", "참가자는 금요일까지 웹사이트에서 신청할 수 있습니다.", ["sign up", "until Friday"]),
+  T("s4-info-3", 4, "Coffee and snacks will be served during the break.", "쉬는 시간에 커피와 간식이 제공됩니다.", ["will be served", "during the break"]),
+  T("s4-info-4", 4, "Your interview is scheduled for 2 p.m. with the HR manager.", "면접은 오후 2시에 인사 담당자와 예정되어 있습니다.", ["is scheduled for", "HR manager"]),
+  T("s4-info-5", 4, "Please note that the room has been changed to 305.", "회의실이 305호로 변경된 점 참고해 주세요.", ["Please note", "has been changed"]),
+  // Opinion connectors · 의견 연결
+  T("s4-op-1", 5, "To begin with, it gives people more freedom.", "우선, 그것은 사람들에게 더 많은 자유를 줘요.", ["To begin with", "freedom"]),
+  T("s4-op-2", 5, "Another reason is that it helps people build good habits.", "또 다른 이유는 좋은 습관을 만드는 데 도움이 된다는 거예요.", ["Another reason is that", "good habits"]),
+  T("s4-op-3", 5, "From my experience, it really makes a big difference.", "제 경험상 그것은 정말 큰 차이를 만들어요.", ["From my experience", "big difference"]),
+  T("s4-op-4", 5, "That is why I strongly agree with this idea.", "그래서 저는 이 생각에 강하게 동의합니다.", ["That is why", "strongly agree"]),
+  T("s4-op-5", 5, "Some people may disagree, but I still think it's worth it.", "반대하는 사람도 있겠지만 저는 여전히 그럴 가치가 있다고 생각해요.", ["may disagree", "worth it"]),
+  T("s4-op-6", 5, "In conclusion, the benefits clearly outweigh the drawbacks.", "결론적으로 장점이 단점보다 확실히 더 큽니다.", ["In conclusion", "outweigh"]),
+  T("s4-op-7", 5, "It not only saves money but also protects the environment.", "그것은 돈을 아낄 뿐 아니라 환경도 보호해요.", ["not only", "but also"]),
+  T("s4-op-8", 5, "As a result, people can enjoy a better quality of life.", "그 결과, 사람들은 더 나은 삶의 질을 누릴 수 있어요.", ["As a result", "quality of life"]),
+];

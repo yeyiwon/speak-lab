@@ -8,7 +8,7 @@ export function PageHeader({ eyebrow, title, children }: { eyebrow: string; titl
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-1.5 text-[2rem] font-bold leading-[1.1] tracking-tight sm:text-[2.5rem]">{title}</h1>
+        <h1 className="mt-1.5 text-[2rem] font-bold leading-[1.1] tracking-tight sm:text-[2rem]">{title}</h1>
       </div>
       {children && <div className="flex flex-wrap gap-2">{children}</div>}
     </header>
@@ -18,9 +18,9 @@ export function PageHeader({ eyebrow, title, children }: { eyebrow: string; titl
 export function Page({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className={`mx-auto w-full px-4 pt-6 sm:px-8 sm:pt-10 ${wide ? "max-w-6xl" : "max-w-5xl"}`}
     >
       {children}
