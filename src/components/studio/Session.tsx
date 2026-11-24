@@ -14,6 +14,7 @@ import { useData } from "@/lib/data/store";
 import { today, uid } from "@/lib/date";
 import type { Attempt } from "@/lib/types";
 import { Scene } from "./Scene";
+import { ANSWER_NOTES, highlight } from "@/content/answer-notes";
 import { Waveform } from "./Waveform";
 
 type Phase = "intro" | "read" | "question" | "prep" | "answer" | "review" | "finished";
@@ -490,11 +491,31 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
                       {showSample && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                           <div className="clay-sunk mt-4 p-5">
-                            {q.sample && <p className="leading-relaxed text-glacier-100">{q.sample}</p>}
                             {q.sample && (
-                              <button type="button" className="btn mt-3 !min-h-[38px] !text-sm" onClick={() => speak(q.sample)}>
-                                <Icon name="speaker" size={16} /> 원어민 예시 답변 듣기
-                              </button>
+                              <p className="leading-relaxed text-glacier-100">
+                                {highlight(q.sample, ANSWER_NOTES[q.id]?.key ?? []).map((c, i) =>
+                                  c.hi ? (
+                                    <mark key={i} className="rounded bg-lime/20 px-0.5 font-semibold text-lime">
+                                      {c.t}
+                                    </mark>
+                                  ) : (
+                                    <span key={i}>{c.t}</span>
+                                  ),
+                                )}
+                              </p>
+                            )}
+                            {ANSWER_NOTES[q.id]?.ko && <p className="mt-3 border-l-2 border-white/15 pl-3 text-sm leading-relaxed text-graphite-300">{ANSWER_NOTES[q.id].ko}</p>}
+                            {q.sample && (
+                              <div className="mt-3 flex flex-wrap items-center gap-3">
+                                <button type="button" className="btn !min-h-[38px] !text-sm" onClick={() => speak(q.sample)}>
+                                  <Icon name="speaker" size={16} /> 원어민 예시 답변 듣기
+                                </button>
+                                {!!ANSWER_NOTES[q.id]?.key.length && (
+                                  <span className="text-xs text-graphite-300">
+                                    <mark className="rounded bg-lime/20 px-1 font-semibold text-lime">강조</mark> 다른 문제에도 쓸 수 있는 표현
+                                  </span>
+                                )}
+                              </div>
                             )}
                             <p className="mt-3 text-sm text-glacier-300">💡 {q.tip}</p>
                             <p className="mt-3 text-[0.7rem] text-graphite-300">SPEAK LAB이 작성한 예시입니다. 공식 모범 답안이 아닙니다.</p>

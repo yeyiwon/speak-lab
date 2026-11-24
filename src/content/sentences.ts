@@ -216,3 +216,77 @@ export const SEED_SENTENCES_V4: Seed[] = [
   T("s4-op-7", 5, "It not only saves money but also protects the environment.", "그것은 돈을 아낄 뿐 아니라 환경도 보호해요.", ["not only", "but also"]),
   T("s4-op-8", 5, "As a result, people can enjoy a better quality of life.", "그 결과, 사람들은 더 나은 삶의 질을 누릴 수 있어요.", ["As a result", "quality of life"]),
 ];
+
+/**
+ * v5 — easy all-purpose expressions: short frames that fit almost any question.
+ * Original SPEAK LAB writing, grouped by the job they do in an answer.
+ */
+export const SEED_SENTENCES_V5: Seed[] = [
+  // 시작·시간 벌기
+  T("s5-start-1", "all", "Well, let me think.", "음, 생각해 볼게요.", ["let me think"]),
+  T("s5-start-2", "all", "That's an interesting question.", "흥미로운 질문이네요.", ["interesting question"]),
+  T("s5-start-3", "all", "Actually, I've never thought about it, but I would say yes.", "사실 생각해 본 적은 없지만, 그렇다고 할게요.", ["never thought about it", "I would say"]),
+  T("s5-start-4", "all", "To answer your question,", "질문에 답하자면,", ["To answer your question"]),
+  T("s5-start-5", "all", "Let me tell you about my experience.", "제 경험을 말씀드릴게요.", ["Let me tell you"]),
+  // 의견 말하기
+  T("s5-op-1", "all", "Personally, I think it's a great idea.", "개인적으로 좋은 생각이라고 봐요.", ["Personally", "great idea"]),
+  T("s5-op-2", "all", "I'm not sure, but I think it depends on the person.", "확실하진 않지만 사람마다 다른 것 같아요.", ["I'm not sure", "depends on the person"]),
+  T("s5-op-3", "all", "I totally agree with that.", "저는 그 말에 완전히 동의해요.", ["totally agree"]),
+  T("s5-op-4", "all", "I don't think that's a good idea.", "그건 좋은 생각이 아닌 것 같아요.", ["I don't think"]),
+  T("s5-op-5", "all", "It's better to do it step by step.", "단계적으로 하는 게 더 나아요.", ["It's better to", "step by step"]),
+  // 이유 붙이기
+  T("s5-why-1", "all", "It's because I don't have much free time.", "자유 시간이 많지 않기 때문이에요.", ["It's because", "free time"]),
+  T("s5-why-2", "all", "The reason is simple. It saves time and money.", "이유는 간단해요. 시간과 돈을 아껴주거든요.", ["The reason is simple", "saves time and money"]),
+  T("s5-why-3", "all", "It's easy to use, and it's not expensive.", "사용하기 쉽고 비싸지도 않아요.", ["easy to use", "not expensive"]),
+  T("s5-why-4", "all", "It's good for my health.", "제 건강에 좋아요.", ["good for my health"]),
+  T("s5-why-5", "all", "It helps me stay focused.", "집중을 유지하는 데 도움이 돼요.", ["helps me", "stay focused"]),
+  T("s5-why-6", "all", "I can learn a lot from it.", "그것으로부터 많이 배울 수 있어요.", ["learn a lot"]),
+  T("s5-why-7", "all", "It makes my life much easier.", "제 삶을 훨씬 편하게 만들어 줘요.", ["makes my life", "much easier"]),
+  T("s5-why-8", "all", "I can do it anytime and anywhere.", "언제 어디서나 할 수 있어요.", ["anytime and anywhere"]),
+  T("s5-why-9", "all", "It's a good way to meet new people.", "새로운 사람을 만나기 좋은 방법이에요.", ["a good way to", "meet new people"]),
+  T("s5-why-10", "all", "Most people around me do the same.", "제 주변 사람들 대부분이 똑같이 해요.", ["Most people around me"]),
+  // 예시·경험
+  T("s5-ex-1", "all", "For example, when I was a student, I did the same thing.", "예를 들어 학생 때 저도 똑같이 했어요.", ["For example", "when I was a student"]),
+  T("s5-ex-2", "all", "I remember one time when I was really busy.", "정말 바빴던 때가 기억나요.", ["I remember one time"]),
+  T("s5-ex-3", "all", "A few weeks ago, I tried it for the first time.", "몇 주 전에 처음으로 해 봤어요.", ["A few weeks ago", "for the first time"]),
+  T("s5-ex-4", "all", "In my case, I usually do it on weekends.", "제 경우에는 보통 주말에 해요.", ["In my case", "on weekends"]),
+  T("s5-ex-5", "all", "One of my friends had the same experience.", "제 친구 중 한 명도 같은 경험을 했어요.", ["One of my friends", "same experience"]),
+  T("s5-ex-6", "all", "It was one of the best experiences of my life.", "제 인생 최고의 경험 중 하나였어요.", ["one of the best", "of my life"]),
+  // 비교·장단점
+  T("s5-cmp-1", "all", "It's much better than before.", "예전보다 훨씬 나아요.", ["much better than before"]),
+  T("s5-cmp-2", "all", "Compared to other options, it's cheaper and faster.", "다른 선택지에 비해 더 싸고 빨라요.", ["Compared to", "cheaper and faster"]),
+  T("s5-cmp-3", "all", "There are pros and cons, but the pros are bigger.", "장단점이 있지만 장점이 더 커요.", ["pros and cons"]),
+  T("s5-cmp-4", "all", "The only problem is that it takes a lot of time.", "유일한 문제는 시간이 많이 걸린다는 거예요.", ["The only problem is that", "takes a lot of time"]),
+  T("s5-cmp-5", "all", "Both are good, but I prefer the first one.", "둘 다 좋지만 저는 첫 번째를 더 좋아해요.", ["Both are good", "I prefer"]),
+  // 빈도·습관
+  T("s5-freq-1", "all", "I do it almost every day.", "거의 매일 해요.", ["almost every day"]),
+  T("s5-freq-2", "all", "I try to do it at least once a week.", "적어도 일주일에 한 번은 하려고 해요.", ["try to", "at least once a week"]),
+  T("s5-freq-3", "all", "I used to do it a lot, but not anymore.", "예전엔 많이 했지만 지금은 안 해요.", ["used to", "not anymore"]),
+  T("s5-freq-4", "all", "It depends on my schedule.", "제 일정에 따라 달라요.", ["depends on my schedule"]),
+  T("s5-freq-5", "all", "It usually takes about thirty minutes.", "보통 30분 정도 걸려요.", ["usually takes about"]),
+  // 느낌·평가
+  T("s5-feel-1", "all", "It was really fun and relaxing.", "정말 재미있고 편안했어요.", ["fun and relaxing"]),
+  T("s5-feel-2", "all", "I was a little nervous at first, but it was fine.", "처음엔 조금 긴장했지만 괜찮았어요.", ["a little nervous", "at first"]),
+  T("s5-feel-3", "all", "I felt much better after that.", "그 뒤로 기분이 훨씬 좋아졌어요.", ["felt much better"]),
+  T("s5-feel-4", "all", "I'm really satisfied with the result.", "결과에 정말 만족해요.", ["really satisfied"]),
+  T("s5-feel-5", "all", "It was worth it.", "그럴 만한 가치가 있었어요.", ["worth it"]),
+  // 바람·계획
+  T("s5-plan-1", "all", "I'm planning to try it again next month.", "다음 달에 다시 해 볼 계획이에요.", ["planning to", "next month"]),
+  T("s5-plan-2", "all", "If I have a chance, I'd like to go there again.", "기회가 되면 다시 가 보고 싶어요.", ["If I have a chance", "I'd like to"]),
+  T("s5-plan-3", "all", "I hope more people can enjoy it.", "더 많은 사람들이 즐길 수 있으면 좋겠어요.", ["I hope", "enjoy it"]),
+  // 추천·조언
+  T("s5-rec-1", "all", "I highly recommend it to everyone.", "모두에게 강력 추천해요.", ["highly recommend"]),
+  T("s5-rec-2", "all", "You should definitely try it.", "꼭 한번 해 보세요.", ["should definitely"]),
+  T("s5-rec-3", "all", "It's a good idea to check it in advance.", "미리 확인하는 게 좋아요.", ["It's a good idea to", "in advance"]),
+  // 정리·마무리
+  T("s5-end-1", "all", "So, that's why I like it.", "그래서 저는 그게 좋아요.", ["that's why"]),
+  T("s5-end-2", "all", "In short, it's very useful.", "요약하자면, 아주 유용해요.", ["In short", "very useful"]),
+  T("s5-end-3", "all", "All in all, I'm happy with it.", "전반적으로 저는 만족해요.", ["All in all", "happy with it"]),
+  T("s5-end-4", "all", "That's all I can say about it.", "제가 말할 수 있는 건 여기까지예요.", ["That's all"]),
+  // 회사·일상 상황 (Part 3·5에 자주)
+  T("s5-life-1", "all", "I usually check reviews online before I buy something.", "뭔가 사기 전에 보통 온라인 후기를 확인해요.", ["check reviews online", "before I buy"]),
+  T("s5-life-2", "all", "It's located near my house, so it's easy to get there.", "집 근처에 있어서 가기 쉬워요.", ["located near", "easy to get there"]),
+  T("s5-life-3", "all", "I prefer to spend my free time at home.", "여가 시간은 집에서 보내는 걸 좋아해요.", ["spend my free time"]),
+  T("s5-life-4", "all", "Working with others can be stressful sometimes.", "다른 사람과 일하는 건 가끔 스트레스가 될 수 있어요.", ["can be stressful", "sometimes"]),
+  T("s5-life-5", "all", "Technology helps us communicate faster.", "기술은 우리가 더 빨리 소통하게 도와줘요.", ["helps us", "communicate faster"]),
+];

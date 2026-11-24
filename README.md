@@ -60,9 +60,9 @@ src/
 
 ## 원어민 음성 (TTS)
 
-- 기본 제공 문장(165) · Part 3/4 질문 · 예시 답변은 **Kokoro-82M**(Apache-2.0, 오픈소스 뉴럴 TTS, 미국 여성 음성 `af_heart`)으로 미리 합성해 `public/tts/*.mp3`(64kbps, 모든 브라우저 재생)로 포함했습니다. API 키·런타임 비용 없음, 모든 브라우저에서 동일한 음질.
+- 기본 제공 문장(221) · Part 3/4 질문 · 예시 답변은 **Kokoro-82M**(Apache-2.0, 오픈소스 뉴럴 TTS, 미국 여성 음성 `af_heart`)으로 미리 합성해 `public/tts/*.mp3`(64kbps, 모든 브라우저 재생)로 포함했습니다. API 키·런타임 비용 없음, 모든 브라우저에서 동일한 음질.
 - `src/content/tts-manifest.json`이 정규화 텍스트 → 파일 id를 매핑하고, 목록에 없는 문장(사용자 등록)은 브라우저 speechSynthesis로 대체합니다.
-- 콘텐츠를 추가하면 음성을 다시 생성하세요: `cd scripts/tts && npm i && npx tsx dump.ts && node gen.mjs` (없는 파일만 생성, `ffmpeg` 필요). 현재 217개 녹음.
+- 콘텐츠를 추가하면 음성을 다시 생성하세요: `cd scripts/tts && npm i && npx tsx dump.ts && node gen.mjs` (없는 파일만 생성, `ffmpeg` 필요). 현재 273개 녹음.
 
 ## 디자인
 
