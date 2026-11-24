@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { LEVELS, PART_SPECS } from "@/content/exam";
 import { Icon } from "@/components/Icon";
 import { Page, PageHeader } from "@/components/ui";
-import { VoicePicker } from "@/components/VoicePicker";
 import { DatePicker } from "@/components/DatePicker";
 import { beep } from "@/lib/audio/sound";
 import { useData } from "@/lib/data/store";
@@ -124,11 +123,8 @@ export default function SettingsPage() {
           <ul className="mt-4 grid gap-3">
             <Toggle label="타이머 알림음" desc="답변 시작·종료 신호음" on={s.timerSound} set={(v) => { set({ timerSound: v }); if (v) beep(); }} />
             <Toggle label="자동 녹음" desc="답변 시간이 시작되면 바로 녹음" on={s.autoRecord} set={(v) => set({ autoRecord: v })} />
-            <Toggle label="질문 읽어주기" desc="Part 3·4 질문을 브라우저 음성으로 재생" on={s.speakQuestions} set={(v) => set({ speakQuestions: v })} />
+            <Toggle label="질문 읽어주기" desc="Part 3·4 질문을 원어민 음성으로 재생" on={s.speakQuestions} set={(v) => set({ speakQuestions: v })} />
           </ul>
-          <div className="mt-4">
-            <VoicePicker settings={s} onChange={set} />
-          </div>
           <button type="button" className="btn btn-ghost mt-4 !text-sm" onClick={() => set({ onboarded: false })}>
             온보딩 다시 보기
           </button>

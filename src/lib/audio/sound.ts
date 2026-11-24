@@ -93,7 +93,7 @@ export interface SpeakOptions {
 /** Read text aloud with the best available English voice (no network cost). Returns a cancel function. */
 /* ───────── Pre-recorded native voice (Kokoro-82M, Apache-2.0) ─────────
  * Bundled sentences/questions were synthesized ahead of time with a neural
- * American-English voice (public/tts/*.m4a). The manifest maps normalized
+ * American-English voice (public/tts/*.mp3). The manifest maps normalized
  * text → file id. Anything not in the manifest (e.g. the learner's own
  * sentences) falls back to the browser's speech synthesis.
  */
@@ -120,27 +120,52 @@ export function stopSpeaking() {
   if (canSpeak()) window.speechSynthesis.cancel();
 }
 
-/** Speak text: native recording if bundled, otherwise the best installed browser voice. Returns a cancel function. */
+/**
+ * Speak text.
+ * - Bundled sentences/questions/answers: always the pre-recorded Kokoro voice (MP3).
+ *   Never falls back to the device's robotic voice. If the browser blocks autoplay
+ *   before the first user gesture, the clip plays on the next tap/keypress instead.
+ * - Learner-added sentences (no recording): best installed English voice.
+ * Returns a cancel function.
+ */
 export function speak(text: string, opts: SpeakOptions = {}) {
   let cancelled = false;
+  let removeGestureWait: (() => void) | null = null;
   stopSpeaking();
   loadManifest().then((m) => {
     if (cancelled) return;
     const id = m[normTTS(text)];
-    if (id) {
-      const a = new Audio(`/tts/${id}.m4a`);
-      a.playbackRate = opts.rate ?? 1;
-      (a as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
-      a.onended = () => !cancelled && opts.onend?.();
-      a.onerror = () => !cancelled && synthSpeak(text, opts, () => cancelled);
-      currentAudio = a;
-      a.play().catch(() => !cancelled && synthSpeak(text, opts, () => cancelled));
+    if (!id) {
+      synthSpeak(text, opts, () => cancelled);
       return;
     }
-    synthSpeak(text, opts, () => cancelled);
+    const a = new Audio(`/tts/${id}.mp3`);
+    a.preload = "auto";
+    a.onended = () => !cancelled && opts.onend?.();
+    a.onerror = () => !cancelled && opts.onend?.(); // keep the flow moving; no robot fallback
+    currentAudio = a;
+    a.play().catch((e: DOMException) => {
+      if (cancelled) return;
+      if (e?.name === "NotAllowedError") {
+        // Autoplay blocked: play on the user's next interaction.
+        const retry = () => {
+          removeGestureWait?.();
+          if (!cancelled && currentAudio === a) a.play().catch(() => opts.onend?.());
+        };
+        window.addEventListener("pointerdown", retry, { once: true, capture: true });
+        window.addEventListener("keydown", retry, { once: true, capture: true });
+        removeGestureWait = () => {
+          window.removeEventListener("pointerdown", retry, { capture: true });
+          window.removeEventListener("keydown", retry, { capture: true });
+        };
+      } else if (e?.name !== "AbortError") {
+        opts.onend?.();
+      }
+    });
   });
   return () => {
     cancelled = true;
+    removeGestureWait?.();
     stopSpeaking();
   };
 }

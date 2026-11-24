@@ -1,4 +1,4 @@
-// Synthesizes missing recordings with Kokoro-82M (Apache-2.0) and converts to AAC via macOS afconvert.
+// Synthesizes missing recordings with Kokoro-82M (Apache-2.0) and encodes MP3 (universally playable) via ffmpeg.
 // Usage: cd scripts/tts && npm i && npx tsx dump.ts && node gen.mjs
 import { KokoroTTS } from "kokoro-js";
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from "node:fs";
@@ -20,7 +20,7 @@ const manifest = existsSync(MAN) ? JSON.parse(readFileSync(MAN, "utf8")) : {};
 const todo = texts.map(norm).filter((t) => {
   const id = createHash("sha1").update(t).digest("hex").slice(0, 12);
   manifest[t] = id;
-  return !existsSync(join(OUT, id + ".m4a"));
+  return !existsSync(join(OUT, id + ".mp3"));
 });
 console.log(`${todo.length} to synthesize`);
 if (todo.length) {
@@ -29,7 +29,7 @@ if (todo.length) {
     const id = manifest[text];
     const wav = join(tmpdir(), id + ".wav");
     await (await tts.generate(text, { voice: "af_heart", speed: 1 })).save(wav);
-    execFileSync("afconvert", ["-f", "m4af", "-d", "aac", "-b", "56000", wav, join(OUT, id + ".m4a")]);
+    execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", wav, "-ac", "1", "-ar", "24000", "-codec:a", "libmp3lame", "-b:a", "64k", join(OUT, id + ".mp3")]);
     unlinkSync(wav);
     if ((i + 1) % 10 === 0) console.log(`${i + 1}/${todo.length}`);
   }

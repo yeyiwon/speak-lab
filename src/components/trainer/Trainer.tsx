@@ -75,14 +75,13 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
   const current = data?.sentences.find((s) => s.id === queue[idx]);
   const finished = idx >= queue.length;
   const effMode: TrainerMode = mode === "shuffle" || mode === "read" ? "hint" : mode;
-  const voice = { voiceURI: data?.settings.voiceURI, rate: data?.settings.speechRate };
   const currentEn = current?.en;
   // Shadowing: play the native recording as each card appears (not in fill-in mode, where it would give the answer away).
   useEffect(() => {
     if (!autoPlay || !currentEn || mode === "cloze") return;
-    const stop = speak(currentEn, { voiceURI: data?.settings.voiceURI, rate: data?.settings.speechRate });
+    const stop = speak(currentEn);
     return () => stop();
-  }, [idx, currentEn, autoPlay, mode, data?.settings.voiceURI, data?.settings.speechRate]);
+  }, [idx, currentEn, autoPlay, mode]);
 
   const timedSec = current ? Math.min(15, Math.max(4, Math.round(current.en.split(/\s+/).length * 0.6 + 2))) : 5;
   const remaining = useCountdown(timedSec, effMode === "timed" && !finished, () => {}, `${idx}-${queue[idx]}`);
@@ -228,7 +227,7 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
             <div className="mt-7 flex flex-col gap-3">
               {revealed && (
                 <div className="flex items-center gap-3">
-                  <button type="button" className="btn btn-glacier !min-h-[52px] flex-1 !text-base" onClick={() => speak(current.en, voice)}>
+                  <button type="button" className="btn btn-glacier !min-h-[52px] flex-1 !text-base" onClick={() => speak(current.en)}>
                     <Icon name="speaker" size={18} /> 원어민 발음 듣기
                   </button>
                   <button

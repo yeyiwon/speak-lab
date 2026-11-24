@@ -133,11 +133,9 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
       // Some browsers never fire onend (no voices installed) — never let that block the session.
       const words = text.split(/\s+/).length;
       const guard = setTimeout(go, (words * 450 + 2500) * (q.repeat ? 2 : 1));
-      const voice = { voiceURI: settings.voiceURI, rate: settings.speechRate };
       let stop = speak(text, {
-        ...voice,
         onend: () => {
-          if (q.repeat) stop = speak(text, { ...voice, onend: go });
+          if (q.repeat) stop = speak(text, { onend: go });
           else go();
         },
       });
@@ -148,7 +146,7 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
     }
     const t = setTimeout(() => setPhase("prep"), set.part === 3 || set.part === 4 ? 2500 : 0);
     return () => clearTimeout(t);
-  }, [phase, q, set.part, settings.speakQuestions, settings.voiceURI, settings.speechRate]);
+  }, [phase, q, set.part, settings.speakQuestions]);
 
   function begin() {
     rec.prepare();
@@ -474,7 +472,7 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
                           <div className="clay-sunk mt-4 p-5">
                             {q.sample && <p className="leading-relaxed text-glacier-100">{q.sample}</p>}
                             {q.sample && (
-                              <button type="button" className="btn mt-3 !min-h-[38px] !text-sm" onClick={() => speak(q.sample, { rate: settings.speechRate })}>
+                              <button type="button" className="btn mt-3 !min-h-[38px] !text-sm" onClick={() => speak(q.sample)}>
                                 <Icon name="speaker" size={16} /> 원어민 예시 답변 듣기
                               </button>
                             )}
