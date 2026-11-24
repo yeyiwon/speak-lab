@@ -610,6 +610,19 @@ h3 {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  /* Studio is dark: its neutral buttons/surfaces must stay dark, or light text vanishes. */
+  .studio .btn:not(.btn-primary):not(.btn-lime):not(.btn-glacier):not(.btn-ghost) {
+    background: #2b2d31;
+    color: var(--glacier-100);
+  }
+  .studio .clay,
+  .studio .panel,
+  .studio .clay-sm {
+    background: #24262a;
+  }
+  .studio .field {
+    background: #24262a;
+  }
 }
 
 /* Quiet scrollbars — thin, translucent, darker only on hover */
