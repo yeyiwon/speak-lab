@@ -59,7 +59,7 @@ export default function ReviewPage() {
               </button>
             </>
           ) : (
-            <p className="mt-4 text-sm text-ink-muted">문장 연습에서 ‘다시 연습’을 누른 문장이 여기에 모여요.</p>
+            <p className="mt-4 text-sm text-ink-muted">문장 연습에서 ‘어려워요’를 누른 문장이 여기에 모여요.</p>
           )}
         </section>
 

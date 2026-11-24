@@ -13,7 +13,7 @@ export interface DrillConfig {
   display: DrillDisplay;
 }
 
-export const DEFAULT_DRILL: DrillConfig = { order: "random", size: 10, part: "any", display: "both" };
+export const DEFAULT_DRILL: DrillConfig = { order: "random", size: "all", part: "any", display: "both" };
 
 export const ORDER_LABEL: Record<DrillOrder, string> = { random: "랜덤", weak: "틀린 문장 우선", new: "새 문장 우선", picked: "선택한 문장만" };
 export const DISPLAY_LABEL: Record<DrillDisplay, string> = { both: "영어+한국어", ko: "한국어 보고 말하기", cloze: "빈칸 채우기" };
@@ -47,7 +47,8 @@ export function drillPool(sentences: Sentence[], cfg: DrillConfig, picked: strin
 /** Number of questions a session will actually have (never more than the sentences available). */
 export function drillCount(sentences: Sentence[], cfg: DrillConfig, picked: string[]): number {
   const n = drillPool(sentences, cfg, picked).length;
-  return cfg.size === "all" ? n : Math.min(cfg.size, n);
+  // Hand-picked sentences are all served — the count limit would silently drop some.
+  return cfg.size === "all" || cfg.order === "picked" ? n : Math.min(cfg.size, n);
 }
 
 /** Builds the question order once, at session start. No duplicates; the order is then fixed. */

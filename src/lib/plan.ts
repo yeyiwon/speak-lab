@@ -160,16 +160,19 @@ export function buildPlan(inputs: PlanInputs, date: ISODate): DailyPlan {
   return { date, items, createdAt: Date.now() };
 }
 
+export const DAILY_SENTENCE_GOAL = 10;
+
 /** The 문장 연습 plan item, derived from the saved practice setup (default: random 10). */
 export function sentencePlanItem(inputs: Pick<PlanInputs, "settings" | "sentences">): PlanItem | null {
   const cfg = { ...DEFAULT_DRILL, ...inputs.settings.drill };
-  const n = drillCount(inputs.sentences, cfg, inputs.settings.pickedSentenceIds ?? []);
+  // Daily goal: 10 sentences (or fewer if the chosen setup has fewer) — a full-bank session is open-ended.
+  const n = Math.min(DAILY_SENTENCE_GOAL, drillCount(inputs.sentences, cfg, inputs.settings.pickedSentenceIds ?? []));
   if (!n) return null;
   return {
     id: uid("pi-"),
     kind: "sentences",
     title: "문장 연습",
-    detail: `${ORDER_LABEL[cfg.order]} ${n}문장`,
+    detail: `${ORDER_LABEL[cfg.order]} · 오늘 ${n}문장`,
     target: n,
     carried: false,
     estMinutes: Math.max(3, Math.round(n * 0.6)),

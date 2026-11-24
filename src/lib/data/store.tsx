@@ -89,7 +89,9 @@ function makeActions(get: () => AppData | null) {
     /* settings & plan */
     async updateSettings(patch: Partial<Settings>) {
       const d = must();
-      const settings = { ...d.settings, ...patch };
+      // Merge into the stored copy, not the in-memory one: quick successive updates
+      // (e.g. ticking several sentences) would otherwise overwrite each other's fields.
+      const settings = { ...((await repo.getSettings()) ?? d.settings), ...patch };
       await repo.putSettings(settings);
       // Practice setup changed → today's 문장 연습 target follows it.
       const plan = d.plans.find((p) => p.date === today());

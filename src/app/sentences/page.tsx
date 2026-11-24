@@ -53,6 +53,7 @@ function Sentences() {
   const [saved, setSaved] = useState<DrillSession | null>(() => (typeof window === "undefined" ? null : loadSession()));
   const [active, setActive] = useState<DrillSession | null>(null);
   const [autoStarted, setAutoStarted] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
 
   // Local copies make taps feel instant; the same values are persisted to settings in the background.
   const [localCfg, setLocalCfg] = useState<DrillConfig | null>(null);
@@ -136,35 +137,41 @@ function Sentences() {
         </div>
       )}
 
-      {/* Practice setup — the last choice is remembered */}
+      {/* Practice — one tap to start; the setup is tucked away and remembered */}
       <section className="clay mt-6 p-5 sm:p-6" aria-labelledby="drill-h">
-        <h2 id="drill-h" className="font-bold">문장 연습</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="출제 방식">
-            <Segment<DrillOrder> value={cfg.order} options={(Object.keys(ORDER_LABEL) as DrillOrder[]).map((k) => [k, ORDER_LABEL[k]])} onChange={(order) => setCfg({ order })} />
-          </Field>
-          <Field label="문장 수">
-            <Segment value={String(cfg.size)} options={SIZES.map((n) => [String(n), n === "all" ? "전체" : `${n}`])} onChange={(v) => setCfg({ size: v === "all" ? "all" : (Number(v) as 5 | 10 | 20) })} />
-          </Field>
-          <Field label="파트">
-            <Select size="sm" label="파트" value={String(cfg.part)} onChange={(v) => setCfg({ part: parsePart(v) })} options={PART_OPTS} />
-          </Field>
-          <Field label="표시 방식">
-            <Segment<DrillDisplay> value={cfg.display} options={(Object.keys(DISPLAY_LABEL) as DrillDisplay[]).map((k) => [k, DISPLAY_LABEL[k]])} onChange={(display) => setCfg({ display })} />
-          </Field>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h2 id="drill-h" className="font-bold">문장 연습</h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              {ORDER_LABEL[cfg.order]} · {cfg.size === "all" ? "전체" : `${cfg.size}문장`} · {cfg.part === "any" ? "모든 파트" : cfg.part === "all" ? "공통" : `Part ${cfg.part}`} · {DISPLAY_LABEL[cfg.display]}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="btn btn-ghost !min-h-[44px] !text-sm" aria-expanded={showSetup} onClick={() => setShowSetup((v) => !v)}>
+              설정 바꾸기
+            </button>
+            <button type="button" className="btn btn-primary !min-h-[48px] !px-6" disabled={!count} onClick={start}>
+              바로 시작 <span className="num">({count})</span>
+            </button>
+          </div>
         </div>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-ink-muted">
-            {cfg.order === "picked" && !picked.length
-              ? "아래 목록에서 연습할 문장을 체크하세요."
-              : count
-                ? `${count}문장을 무작위 순서로 출제합니다.`
-                : "조건에 맞는 문장이 없어요."}
-          </p>
-          <button type="button" className="btn btn-primary !min-h-[48px] !px-6" disabled={!count} onClick={start}>
-            연습 시작 <span className="num">({count})</span>
-          </button>
-        </div>
+        {cfg.order === "picked" && !picked.length && <p className="mt-3 text-sm text-ink-muted">아래 목록에서 연습할 문장을 체크하세요.</p>}
+        {showSetup && (
+          <div className="mt-5 grid gap-4 border-t border-glacier-300/50 pt-5 sm:grid-cols-2">
+            <Field label="출제 방식">
+              <Segment<DrillOrder> value={cfg.order} options={(Object.keys(ORDER_LABEL) as DrillOrder[]).map((k) => [k, ORDER_LABEL[k]])} onChange={(order) => setCfg({ order })} />
+            </Field>
+            <Field label={cfg.order === "picked" ? "문장 수 (선택한 문장은 전부 출제)" : "문장 수"}>
+              <Segment value={String(cfg.size)} options={SIZES.map((n) => [String(n), n === "all" ? "전체" : `${n}`])} onChange={(v) => setCfg({ size: v === "all" ? "all" : (Number(v) as 5 | 10 | 20) })} />
+            </Field>
+            <Field label="파트">
+              <Select size="sm" label="파트" value={String(cfg.part)} onChange={(v) => setCfg({ part: parsePart(v) })} options={PART_OPTS} />
+            </Field>
+            <Field label="표시 방식">
+              <Segment<DrillDisplay> value={cfg.display} options={(Object.keys(DISPLAY_LABEL) as DrillDisplay[]).map((k) => [k, DISPLAY_LABEL[k]])} onChange={(display) => setCfg({ display })} />
+            </Field>
+          </div>
+        )}
       </section>
 
       <section className="mt-10">

@@ -14,9 +14,8 @@ const LOG_MODE: Record<DrillSession["display"], TrainerMode> = { both: "read", k
 /**
  * One sentence at a time.
  *  정답 보기 / 확인 — only reveals; records nothing
- *  알고 있음        — records "good": the next review moves further out
- *  다시 연습        — records "again": review tomorrow, and it comes back once at the end of this session
- *  건너뛰기         — moves on without recording anything
+ *  다음 →          — records "good": the next review moves further out
+ *  어려워요         — records "again": review tomorrow, and it comes back once at the end of this session
  *  종료             — leaves; the session can be resumed later (persist=true)
  */
 export function Trainer({ session: initial, persist, onExit, onRestart }: { session: DrillSession; persist: boolean; onExit: () => void; onRestart?: () => void }) {
@@ -89,7 +88,7 @@ export function Trainer({ session: initial, persist, onExit, onRestart }: { sess
     setBusy(false);
   }
 
-  // Keyboard: Space = 정답 보기 · 1/← = 다시 연습 · 2/→ = 알고 있음 · Esc = 종료
+  // Keyboard: Space = 정답 보기 · →/Enter = 다음 · ← = 어려워요 · Esc = 종료
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === "INPUT") {
@@ -100,8 +99,8 @@ export function Trainer({ session: initial, persist, onExit, onRestart }: { sess
       if (!revealed && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
         setRevealed(true);
-      } else if (revealed && (e.key === "ArrowRight" || e.key === "2")) rate(true);
-      else if (revealed && (e.key === "ArrowLeft" || e.key === "1")) rate(false);
+      } else if (revealed && (e.key === "ArrowRight" || e.key === "Enter")) rate(true);
+      else if (revealed && e.key === "ArrowLeft") rate(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -129,9 +128,9 @@ export function Trainer({ session: initial, persist, onExit, onRestart }: { sess
           <div className="clay p-8 text-center">
             <p className="text-xl font-bold">세션 완료</p>
             <p className="num mt-3 text-ink-muted">
-              알고 있음 <strong className="text-ink">{s.known}</strong> · 다시 연습 <strong className="text-ink">{s.again}</strong>
+              연습 <strong className="text-ink">{s.known + s.again}</strong>문장 · 어려워요 <strong className="text-ink">{s.again}</strong>
             </p>
-            <p className="mt-1 text-sm text-ink-muted">다시 연습한 문장은 내일 복습에 나옵니다.</p>
+            <p className="mt-1 text-sm text-ink-muted">어려워요를 누른 문장은 내일 복습에 나옵니다.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               {onRestart && (
                 <button type="button" className="btn btn-primary" onClick={onRestart}>
@@ -225,19 +224,16 @@ export function Trainer({ session: initial, persist, onExit, onRestart }: { sess
                   {s.display === "cloze" ? "확인" : "정답 보기"}
                 </button>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" className="btn !min-h-[56px]" disabled={busy} onClick={() => rate(false)}>
-                    <Icon name="retry" size={17} /> 다시 연습
+                <div className="grid grid-cols-[1fr_2.2fr] gap-3">
+                  <button type="button" className="btn !min-h-[56px] !text-sm" disabled={busy} onClick={() => rate(false)}>
+                    어려워요
                   </button>
                   <button type="button" className="btn btn-primary !min-h-[56px] !text-base" disabled={busy} onClick={() => rate(true)}>
-                    <Icon name="check" size={17} /> 알고 있음
+                    다음 <Icon name="arrow" size={18} />
                   </button>
                 </div>
               )}
-              <button type="button" className="btn btn-ghost mx-auto !min-h-[36px] !text-sm text-ink-muted" onClick={() => goNext((p) => p)}>
-                건너뛰기 <span className="text-xs">(기록 안 함)</span>
-              </button>
-              <p className="hidden text-center text-xs text-ink-muted sm:block">Space 정답 보기 · 1 다시 연습 · 2 알고 있음 · Esc 종료</p>
+              <p className="hidden text-center text-xs text-ink-muted sm:block">Space 정답 보기 · → 다음 · ← 어려워요 · Esc 종료</p>
             </div>
           </>
         )}

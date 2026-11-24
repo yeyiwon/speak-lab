@@ -57,5 +57,8 @@ test("new-first, picked-only and part filter", () => {
   const b = bank.map((s, i) => (i % 2 ? { ...s, status: "familiar" as const, lastReviewed: 1 } : s));
   assert.ok(buildSession(b, cfg({ order: "new", size: 10 }), [], D).every((id) => Number(id.slice(1)) % 2 === 0));
   assert.deepEqual(new Set(buildSession(bank, cfg({ order: "picked", size: "all" }), ["s1", "s2"], D)), new Set(["s1", "s2"]));
+  // picked ignores the count limit: 20 ticked with size 5 → all 20
+  const twenty = bank.slice(0, 20).map((s) => s.id);
+  assert.equal(buildSession(bank, cfg({ order: "picked", size: 5 }), twenty, D).length, 20);
   assert.ok(buildSession(bank, cfg({ part: 3, size: "all" }), [], D).every((id) => bank.find((s) => s.id === id)!.part === 3));
 });
