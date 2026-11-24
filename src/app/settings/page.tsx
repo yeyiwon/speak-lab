@@ -64,7 +64,7 @@ export default function SettingsPage() {
 
   return (
     <Page>
-      <PageHeader eyebrow="Settings" title="맞춤 설정" />
+      <PageHeader eyebrow="Settings" title="설정" />
       {msg && (
         <p role="status" className="clay-graphite fixed inset-x-4 bottom-28 z-50 mx-auto max-w-sm p-4 text-center text-sm font-bold md:bottom-8">
           {msg}

@@ -41,6 +41,7 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
   const [lastBlob, setLastBlob] = useState<Blob | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [showSample, setShowSample] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const spoken = useRef(0);
   const savedRef = useRef<string[]>([]);
   useEffect(() => {
@@ -95,13 +96,27 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
         flagged: false,
       };
       // Saved immediately — nothing is lost if the learner closes the tab during review.
-      const saved = await actions.saveAttempt(a, result ?? undefined);
+      let saved: Attempt;
+      try {
+        saved = await actions.saveAttempt(a, result ?? undefined);
+        setSaveError(null);
+      } catch {
+        // Usually storage quota: keep the attempt record even if the audio can't be stored.
+        saved = await actions.saveAttempt(a).catch(() => a);
+        setSaveError("녹음 파일을 저장하지 못했어요(저장 공간 부족일 수 있어요). 답변 기록만 저장했습니다.");
+      }
       setAttempt(saved);
       setLastBlob(result?.blob ?? null);
       setSavedIds((s) => [...s, saved.id]);
     },
     [phase, rec, q.id, set.id, set.part, respSec, prepSec, opts.mode, actions, settings.timerSound],
   );
+
+  // Leaving while answering keeps what was recorded (saved as "시간 전 종료"), instead of dropping it.
+  async function exitSession() {
+    if (phase === "answer") await finishAnswer(true, remaining);
+    onExit();
+  }
 
   const startAnswer = useCallback(async () => {
     spoken.current = 0;
@@ -199,7 +214,7 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
     <div className="studio fixed inset-0 z-40 flex flex-col overflow-y-auto">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 px-4 pt-4 sm:px-8 sm:pt-6" style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}>
-        <button type="button" className="btn btn-ghost !min-h-[40px] !px-3" onClick={onExit}>
+        <button type="button" className="btn btn-ghost !min-h-[40px] !px-3" onClick={exitSession}>
           <Icon name="back" size={18} /> 나가기
         </button>
         <div className="flex items-center gap-2 text-sm font-bold text-graphite-300">
@@ -418,6 +433,11 @@ export function Session({ set, opts, onExit }: { set: QuestionSet; opts: Session
                       <span className="chip">{attempt.completed ? "시간 끝까지 답변" : "시간 전에 종료"}</span>
                       <span className="chip num">발화 감지 {(attempt.spokenMs / 1000).toFixed(1)}초</span>
                     </div>
+                    {saveError && (
+                      <p role="alert" className="clay-sunk mt-3 p-3 text-sm text-glacier-200">
+                        {saveError}
+                      </p>
+                    )}
 
                     <div className="mt-5">
                       {lastBlob && lastBlob.size > 0 ? (

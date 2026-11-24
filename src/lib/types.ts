@@ -24,6 +24,10 @@ export interface Settings {
   voiceURI?: string | null; // chosen English voice; null = best available
   speechRate?: number; // 0.7–1.2
   seedVersion?: number; // bundled content version already merged into this browser
+  /** Last sentence-practice setup (order / size / part / display). Optional: older data falls back to defaults. */
+  drill?: import("./session").DrillConfig;
+  /** Sentences the learner ticked for "선택한 문장만" practice. */
+  pickedSentenceIds?: string[];
   createdAt: number;
 }
 

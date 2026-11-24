@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { today, uid } from "../date";
-import { buildPlan } from "../plan";
+import { buildPlan, syncSentencePlan } from "../plan";
 import { schedule } from "../srs";
 import type {
   Attempt,
@@ -88,7 +88,13 @@ function makeActions(get: () => AppData | null) {
   return {
     /* settings & plan */
     async updateSettings(patch: Partial<Settings>) {
-      await repo.putSettings({ ...must().settings, ...patch });
+      const d = must();
+      const settings = { ...d.settings, ...patch };
+      await repo.putSettings(settings);
+      // Practice setup changed → today's 문장 연습 target follows it.
+      const plan = d.plans.find((p) => p.date === today());
+      const synced = plan && (patch.drill || patch.pickedSentenceIds) ? syncSentencePlan(plan, { settings, sentences: d.sentences }) : null;
+      if (synced) await repo.put("plans", synced);
     },
     async regeneratePlan(settingsPatch?: Partial<Settings>) {
       const d = must();
@@ -294,9 +300,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const todayPlan = (date && data?.plans.find((p) => p.date === date)) || null;
   const creating = useRef<string | null>(null);
   useEffect(() => {
-    if (!data || !date || todayPlan || creating.current === date) return;
+    if (!data || !date || creating.current === date) return;
     creating.current = date;
-    getRepo().put("plans", buildPlan(data, date));
+    if (!todayPlan) getRepo().put("plans", buildPlan(data, date));
+    else {
+      // Plans made before the 문장 연습 setup existed used another sentence count — align once.
+      const synced = syncSentencePlan(todayPlan, data);
+      if (synced) getRepo().put("plans", synced);
+    }
   }, [data, todayPlan, date]);
 
   return <DataContext.Provider value={{ ready: !!data, error, data, todayPlan, actions }}>{children}</DataContext.Provider>;

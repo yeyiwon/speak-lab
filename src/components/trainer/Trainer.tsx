@@ -5,42 +5,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFocusMode } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
 import { speak, stopSpeaking } from "@/lib/audio/sound";
-import { useCountdown } from "@/lib/audio/useCountdown";
 import { useData } from "@/lib/data/store";
+import { DISPLAY_LABEL, saveSession, type DrillSession } from "@/lib/session";
 import type { Sentence, TrainerMode } from "@/lib/types";
 
-export const MODES: { id: TrainerMode; label: string; desc: string }[] = [
-  { id: "hint", label: "보면서 말하기", desc: "영어·한국어를 한 화면에 보고 소리 내어 말하기" },
-  { id: "shuffle", label: "섞어서 말하기", desc: "전체 문장을 랜덤 순서로" },
-  { id: "timed", label: "시간 안에 말하기", desc: "문장 길이에 맞춘 시간 막대를 보며 말하기" },
-  { id: "cloze", label: "빈칸 채우기", desc: "핵심 표현을 직접 입력" },
-];
-
-function shuffle<T>(xs: T[]): T[] {
-  const a = [...xs];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+const LOG_MODE: Record<DrillSession["display"], TrainerMode> = { both: "read", ko: "hint", cloze: "cloze" };
 
 /**
- * Deliberately simple: one card, two choices.
- *  "다시 볼래요" → comes back later in this session (and sooner next time)
- *  "다음"       → scheduled further out automatically
- * The spaced-repetition details stay out of the learner's way.
+ * One sentence at a time.
+ *  정답 보기 / 확인 — only reveals; records nothing
+ *  알고 있음        — records "good": the next review moves further out
+ *  다시 연습        — records "again": review tomorrow, and it comes back once at the end of this session
+ *  건너뛰기         — moves on without recording anything
+ *  종료             — leaves; the session can be resumed later (persist=true)
  */
-export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sentence[]; onExit: () => void }) {
+export function Trainer({ session: initial, persist, onExit, onRestart }: { session: DrillSession; persist: boolean; onExit: () => void; onRestart?: () => void }) {
   const { data, actions } = useData();
   const setFocus = useFocusMode();
-  const [queue, setQueue] = useState<string[]>(() => (mode === "shuffle" ? shuffle(pool) : pool).map((s) => s.id));
-  const [idx, setIdx] = useState(0);
-  const [revealed, setRevealed] = useState(mode !== "cloze");
+  const [s, setS] = useState(initial);
+  const revealByDefault = s.display === "both";
+  const [revealed, setRevealed] = useState(revealByDefault);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [checked, setChecked] = useState(false);
-  const [done, setDone] = useState(0);
-  const [again, setAgain] = useState(0);
+  const [busy, setBusy] = useState(false);
   const [autoPlay, setAutoPlay] = useState(() => {
     try {
       return localStorage.getItem("sl-autoplay") !== "0";
@@ -48,222 +34,210 @@ export function Trainer({ mode, pool, onExit }: { mode: TrainerMode; pool: Sente
       return true;
     }
   });
-  const toggleAuto = () => {
-    const v = !autoPlay;
-    setAutoPlay(v);
-    try {
-      localStorage.setItem("sl-autoplay", v ? "1" : "0");
-    } catch {
-      /* storage unavailable — keep in memory */
-    }
-  };
-  const doneRef = useRef(0);
-  useEffect(() => {
-    doneRef.current = done;
-  }, [done]);
+  const rated = useRef(0);
 
   useEffect(() => {
     setFocus(true);
     const started = Date.now();
     return () => {
       setFocus(false);
-      actions.logSession("sentences", (Date.now() - started) / 1000, doneRef.current);
+      actions.logSession("sentences", (Date.now() - started) / 1000, rated.current);
       stopSpeaking();
     };
   }, [setFocus, actions]);
 
-  const current = data?.sentences.find((s) => s.id === queue[idx]);
-  const finished = idx >= queue.length;
-  const effMode: TrainerMode = mode === "shuffle" || mode === "read" ? "hint" : mode;
-  const currentEn = current?.en;
-  // Shadowing: play the native recording as each card appears (not in fill-in mode, where it would give the answer away).
+  const id = s.ids[s.idx];
+  const current: Sentence | undefined = data?.sentences.find((x) => x.id === id);
+  const finished = s.idx >= s.ids.length;
+  const checked = s.display === "cloze" && revealed;
+
   useEffect(() => {
-    if (!autoPlay || !currentEn || mode === "cloze") return;
+    if (persist) saveSession(s);
+  }, [s, persist]);
+
+  const currentEn = current?.en;
+  // Shadowing: play the native recording once the English is on screen (never before the answer is revealed).
+  useEffect(() => {
+    if (!autoPlay || !currentEn || !revealed || s.display === "cloze") return;
     const stop = speak(currentEn);
     return () => stop();
-  }, [idx, currentEn, autoPlay, mode]);
-
-  const timedSec = current ? Math.min(15, Math.max(4, Math.round(current.en.split(/\s+/).length * 0.6 + 2))) : 5;
-  const remaining = useCountdown(timedSec, effMode === "timed" && !finished, () => {}, `${idx}-${queue[idx]}`);
+  }, [s.idx, currentEn, autoPlay, revealed, s.display]);
 
   const cloze = useMemo(() => (current ? buildCloze(current) : null), [current]);
   const blanks = cloze?.parts.filter((p): p is { n: number; word: string } => typeof p !== "string") ?? [];
   const allRight = checked && blanks.every((b) => norm(answers[b.n] ?? "") === norm(b.word));
 
-  async function advance(gotIt: boolean) {
-    if (!current) return;
-    await actions.reviewSentence(current.id, gotIt ? "good" : "again", mode);
-    setDone((d) => d + 1);
-    if (!gotIt) {
-      setAgain((a) => a + 1);
-      setQueue((q) => [...q, current.id]);
-    }
-    setIdx((i) => i + 1);
-    setRevealed(mode !== "cloze");
-    setChecked(false);
+  function goNext(update: (p: DrillSession) => DrillSession) {
+    setS((p) => update({ ...p, idx: p.idx + 1 }));
+    setRevealed(revealByDefault);
     setAnswers([]);
   }
 
-  // Keyboard: Space = flip, → / Enter = next, ← = again, Esc = exit
+  async function rate(known: boolean) {
+    if (!current || busy || !revealed) return;
+    setBusy(true);
+    await actions.reviewSentence(current.id, known ? "good" : "again", LOG_MODE[s.display]);
+    rated.current += 1;
+    const requeue = !known && !s.requeued.includes(current.id);
+    goNext((p) => ({
+      ...p,
+      known: p.known + (known ? 1 : 0),
+      again: p.again + (known ? 0 : 1),
+      ids: requeue ? [...p.ids, current.id] : p.ids,
+      requeued: requeue ? [...p.requeued, current.id] : p.requeued,
+    }));
+    setBusy(false);
+  }
+
+  // Keyboard: Space = 정답 보기 · 1/← = 다시 연습 · 2/→ = 알고 있음 · Esc = 종료
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if ((e.target as HTMLElement)?.tagName === "INPUT") {
+        if (e.key === "Enter") setRevealed(true);
+        return;
+      }
       if (e.key === "Escape") return onExit();
-      if (!revealed && e.key === " ") {
+      if (!revealed && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
         setRevealed(true);
-      } else if (revealed && (e.key === "ArrowRight" || e.key === "Enter")) advance(effMode === "cloze" ? allRight : true);
-      else if (revealed && e.key === "ArrowLeft") advance(false);
+      } else if (revealed && (e.key === "ArrowRight" || e.key === "2")) rate(true);
+      else if (revealed && (e.key === "ArrowLeft" || e.key === "1")) rate(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const total = queue.length;
-  const pct = (Math.min(idx, total) / Math.max(1, total)) * 100;
+  const total = s.ids.length;
+  const pct = (Math.min(s.idx, total) / Math.max(1, total)) * 100;
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[var(--bg)]">
       <div className="mx-auto flex w-full max-w-2xl items-center gap-4 px-4 pt-4 sm:px-8 sm:pt-6" style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}>
-        <button type="button" className="btn btn-ghost !min-h-[40px] !px-3" onClick={onExit} aria-label="끝내기">
-          <Icon name="x" size={18} />
+        <button type="button" className="btn btn-ghost !min-h-[40px] !px-3 !text-sm" onClick={onExit}>
+          <Icon name="x" size={16} /> 종료
         </button>
-        <div className="track !h-2.5 flex-1" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="진행률">
+        <div className="track flex-1" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="진행률">
           <span style={{ width: `${pct}%` }} />
         </div>
-        <span className="num w-14 text-right text-sm font-bold text-ink-muted">
-          {Math.min(idx + 1, total)}/{total}
+        <span className="num w-16 text-right text-sm font-semibold text-ink-muted" aria-label="현재 문제">
+          {Math.min(s.idx + 1, total)} / {total}
         </span>
       </div>
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-8 sm:px-8">
-        {finished || !current ? (
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="clay p-8 text-center">
-            <motion.div
-              className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-graphite-900 text-glacier-100"
-              initial={{ scale: 0, rotate: -30 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 14 }}
-            >
-              <Icon name="check" size={30} />
-            </motion.div>
-            <p className="mt-4 text-2xl font-bold">오늘 {done - again}문장 통과</p>
-            <p className="mt-2 text-sm text-ink-muted">{again ? `다시 본 문장 ${again}개는 다음에 조금 더 일찍 나와요.` : "막힘 없이 끝냈어요."}</p>
-            <button type="button" className="btn btn-primary mt-6" onClick={onExit}>
-              돌아가기
+        {finished ? (
+          <div className="clay p-8 text-center">
+            <p className="text-xl font-bold">세션 완료</p>
+            <p className="num mt-3 text-ink-muted">
+              알고 있음 <strong className="text-ink">{s.known}</strong> · 다시 연습 <strong className="text-ink">{s.again}</strong>
+            </p>
+            <p className="mt-1 text-sm text-ink-muted">다시 연습한 문장은 내일 복습에 나옵니다.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              {onRestart && (
+                <button type="button" className="btn btn-primary" onClick={onRestart}>
+                  새 세션 시작
+                </button>
+              )}
+              <button type="button" className="btn" onClick={onExit}>
+                목록으로
+              </button>
+            </div>
+          </div>
+        ) : !current ? (
+          // The sentence was deleted after this session started.
+          <div className="clay p-8 text-center">
+            <p className="text-ink-muted">삭제된 문장이에요.</p>
+            <button type="button" className="btn btn-primary mt-4" onClick={() => goNext((p) => p)}>
+              다음 문장
             </button>
-          </motion.div>
+          </div>
         ) : (
           <>
-            <p className="eyebrow mb-3 flex items-center justify-between">
-              <span>{MODES.find((m) => m.id === mode)?.label}</span>
-              {effMode === "timed" && <span className={`num text-xl font-bold normal-case tracking-normal ${remaining < 2000 ? "text-rec" : "text-ink"}`}>{Math.ceil(remaining / 1000)}s</span>}
-            </p>
-
-            <div>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${idx}-${current.id}`}
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -40 }}
-                  transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {effMode === "cloze" && cloze ? (
-                    <div className="clay p-7 sm:p-9">
-                      <p className="text-sm text-ink-muted">{current.ko}</p>
-                      <p className="mt-4 text-[1.3rem] font-bold leading-[2.2]">
-                        {cloze.parts.map((p, i) =>
-                          typeof p === "string" ? (
-                            <span key={i}>{p}</span>
-                          ) : (
-                            <input
-                              key={i}
-                              aria-label={`빈칸 ${p.n + 1}`}
-                              autoCapitalize="off"
-                              autoCorrect="off"
-                              className={`field !inline-block !min-h-0 !w-auto !px-3 !py-0.5 align-middle !text-[1.05rem] font-bold ${
-                                checked ? (norm(answers[p.n] ?? "") === norm(p.word) ? "!text-ok" : "!text-rec") : ""
-                              }`}
-                              style={{ width: `${Math.max(4, p.word.length + 2)}ch` }}
-                              value={answers[p.n] ?? ""}
-                              disabled={checked}
-                              onChange={(e) => {
-                                const a = [...answers];
-                                a[p.n] = e.target.value;
-                                setAnswers(a);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  setChecked(true);
-                                  setRevealed(true);
-                                }
-                              }}
-                            />
-                          ),
-                        )}
-                      </p>
-                      {checked && (
-                        <motion.p initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className={`mt-5 text-sm font-bold ${allRight ? "text-ok" : "text-glacier-700"}`}>
-                          {allRight ? "정답이에요!" : `정답: ${current.en}`}
-                        </motion.p>
+            <p className="eyebrow mb-3">{DISPLAY_LABEL[s.display]}</p>
+            <AnimatePresence mode="wait">
+              <motion.div key={`${s.idx}-${current.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                {s.display === "cloze" && cloze ? (
+                  <div className="clay p-7 sm:p-9">
+                    <p className="text-sm text-ink-muted">{current.ko}</p>
+                    <p className="mt-4 text-[1.3rem] font-semibold leading-[2.2]">
+                      {cloze.parts.map((p, i) =>
+                        typeof p === "string" ? (
+                          <span key={i}>{p}</span>
+                        ) : (
+                          <input
+                            key={i}
+                            aria-label={`빈칸 ${p.n + 1}`}
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            className={`field !inline-block !min-h-0 !w-auto !px-3 !py-0.5 align-middle !text-[1.05rem] font-semibold ${
+                              checked ? (norm(answers[p.n] ?? "") === norm(p.word) ? "!text-ok" : "!text-rec") : ""
+                            }`}
+                            style={{ width: `${Math.max(4, p.word.length + 2)}ch` }}
+                            value={answers[p.n] ?? ""}
+                            disabled={checked}
+                            onChange={(e) => {
+                              const a = [...answers];
+                              a[p.n] = e.target.value;
+                              setAnswers(a);
+                            }}
+                          />
+                        ),
                       )}
-                    </div>
-                  ) : (
-                    <div className="clay-graphite flex min-h-[240px] flex-col justify-center p-7 sm:p-9">
-                      <p className="text-[1.45rem] font-semibold leading-snug sm:text-[1.7rem]">{current.en}</p>
-                      <p className="mt-4 text-[0.98rem] text-glacier-300">{current.ko}</p>
-                      {effMode === "timed" && (
-                        <div className="mt-6 h-1 overflow-hidden rounded-full bg-white/10" aria-hidden>
-                          <div className="h-full rounded-full bg-lime transition-[width] duration-100" style={{ width: `${(remaining / (timedSec * 1000)) * 100}%` }} />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                    </p>
+                    {checked && <p className={`mt-5 text-sm font-semibold ${allRight ? "text-ok" : "text-glacier-700"}`}>{allRight ? "정답" : `정답: ${current.en}`}</p>}
+                  </div>
+                ) : (
+                  <div className="clay-graphite flex min-h-[220px] flex-col justify-center p-7 sm:p-9">
+                    {s.display === "ko" && <p className="text-[1.35rem] font-semibold leading-snug">{current.ko}</p>}
+                    {revealed && <p className={`font-semibold leading-snug ${s.display === "ko" ? "mt-4 text-lg text-lime" : "text-[1.45rem] sm:text-[1.7rem]"}`}>{current.en}</p>}
+                    {s.display === "both" && <p className="mt-4 text-[0.98rem] text-glacier-300">{current.ko}</p>}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-            <div className="mt-7 flex flex-col gap-3">
-              {revealed && (
+            <div className="mt-6 flex flex-col gap-3">
+              {s.display !== "cloze" && (
                 <div className="flex items-center gap-3">
-                  <button type="button" className="btn btn-glacier !min-h-[52px] flex-1 !text-base" onClick={() => speak(current.en)}>
+                  <button type="button" className="btn btn-glacier !min-h-[48px] flex-1" disabled={!revealed} onClick={() => speak(current.en)}>
                     <Icon name="speaker" size={18} /> 원어민 발음 듣기
                   </button>
                   <button
                     type="button"
                     role="switch"
                     aria-checked={autoPlay}
-                    onClick={() => toggleAuto()}
-                    className={`btn !min-h-[52px] !px-4 !text-sm ${autoPlay ? "!bg-graphite-900 !text-lime" : ""}`}
+                    onClick={() => {
+                      setAutoPlay(!autoPlay);
+                      try {
+                        localStorage.setItem("sl-autoplay", autoPlay ? "0" : "1");
+                      } catch {
+                        /* keep in memory */
+                      }
+                    }}
+                    className={`btn !min-h-[48px] !px-4 !text-sm ${autoPlay ? "!bg-graphite-900 !text-lime" : ""}`}
                   >
                     자동 재생 {autoPlay ? "ON" : "OFF"}
                   </button>
                 </div>
               )}
-              {effMode === "cloze" && !checked && (
-                <button
-                  type="button"
-                  className="btn btn-primary !min-h-[56px] !text-base"
-                  onClick={() => {
-                    setChecked(true);
-                    setRevealed(true);
-                  }}
-                >
-                  확인
+              {!revealed ? (
+                <button type="button" className="btn btn-primary !min-h-[56px] !text-base" onClick={() => setRevealed(true)}>
+                  {s.display === "cloze" ? "확인" : "정답 보기"}
                 </button>
-              )}
-              {revealed && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-[1fr_1.6fr] gap-3">
-                  <button type="button" className="btn !min-h-[56px]" onClick={() => advance(false)}>
-                    <Icon name="retry" size={17} /> 다시 볼래요
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" className="btn !min-h-[56px]" disabled={busy} onClick={() => rate(false)}>
+                    <Icon name="retry" size={17} /> 다시 연습
                   </button>
-                  <button type="button" className="btn btn-primary !min-h-[56px] !text-base" onClick={() => advance(effMode === "cloze" ? allRight : true)}>
-                    다음 <Icon name="arrow" size={18} />
+                  <button type="button" className="btn btn-primary !min-h-[56px] !text-base" disabled={busy} onClick={() => rate(true)}>
+                    <Icon name="check" size={17} /> 알고 있음
                   </button>
-                </motion.div>
+                </div>
               )}
-              <p className="hidden text-center text-xs text-ink-muted sm:block">→ / Enter 다음 · ← 다시 · Esc 끝내기</p>
+              <button type="button" className="btn btn-ghost mx-auto !min-h-[36px] !text-sm text-ink-muted" onClick={() => goNext((p) => p)}>
+                건너뛰기 <span className="text-xs">(기록 안 함)</span>
+              </button>
+              <p className="hidden text-center text-xs text-ink-muted sm:block">Space 정답 보기 · 1 다시 연습 · 2 알고 있음 · Esc 종료</p>
             </div>
           </>
         )}
@@ -285,7 +259,7 @@ function buildCloze(s: Sentence): { parts: (string | { n: number; word: string }
         next.push(p);
         continue;
       }
-      const i = p.toLowerCase().indexOf(k.toLowerCase());
+      const i = p.toLowerCase().indexOf(k.replace(/[[\]]/g, "").toLowerCase());
       if (i < 0) {
         next.push(p);
         continue;

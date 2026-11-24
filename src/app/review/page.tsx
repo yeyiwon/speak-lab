@@ -10,6 +10,7 @@ import { Empty, Page, PageHeader } from "@/components/ui";
 import { useData } from "@/lib/data/store";
 import { addDays, formatKDate, today } from "@/lib/date";
 import { weakAttempts, weakSentences } from "@/lib/insights";
+import { newSession } from "@/lib/session";
 import type { Attempt } from "@/lib/types";
 
 export default function ReviewPage() {
@@ -28,8 +29,8 @@ export default function ReviewPage() {
   const recordings = [...data.attempts].filter((a) => a.audioId).sort((a, b) => b.startedAt - a.startedAt).slice(0, 8);
 
   if (training) {
-    const pool = data.sentences.filter((s) => training.includes(s.id));
-    return <Trainer mode="hint" pool={pool} onExit={() => setTraining(null)} />;
+    // Review sessions are short and targeted, so they are not kept for resuming.
+    return <Trainer session={newSession(training, "both")} persist={false} onExit={() => setTraining(null)} />;
   }
 
   return (
@@ -54,11 +55,11 @@ export default function ReviewPage() {
                 ))}
               </ul>
               <button type="button" className="btn btn-primary mt-5" onClick={() => setTraining(weakS.map((s) => s.id))}>
-                막힌 문장 {weakS.length}개 훈련
+                막혔던 문장 {weakS.length}개 연습
               </button>
             </>
           ) : (
-            <p className="mt-4 text-sm text-ink-muted">문장 연습에서 ‘다시 볼래요’를 누른 문장이 여기에 모여요.</p>
+            <p className="mt-4 text-sm text-ink-muted">문장 연습에서 ‘다시 연습’을 누른 문장이 여기에 모여요.</p>
           )}
         </section>
 
@@ -80,9 +81,9 @@ export default function ReviewPage() {
               );
             })}
           </div>
-          <Link href="/sentences?train=hint" className="btn mt-5">
-            오늘 복습분 시작 <Icon name="arrow" size={16} />
-          </Link>
+          <button type="button" className="btn btn-primary mt-5" disabled={!due.length} onClick={() => setTraining(due.map((s) => s.id))}>
+            복습 대기 {due.length}문장 연습 <Icon name="arrow" size={16} />
+          </button>
         </section>
       </div>
 

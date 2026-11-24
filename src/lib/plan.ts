@@ -2,6 +2,7 @@ import { SETS_BY_PART } from "@/content/questions";
 import { PART_SPECS } from "@/content/exam";
 import { addDays, diffDays, uid } from "./date";
 import { weakAttempts, weakSentences } from "./insights";
+import { DEFAULT_DRILL, drillCount, ORDER_LABEL } from "./session";
 import type { Attempt, DailyPlan, ISODate, Material, PartNo, PlanItem, ReviewLog, Sentence, Settings } from "./types";
 
 export interface PlanInputs {
@@ -99,23 +100,11 @@ export function buildPlan(inputs: PlanInputs, date: ISODate): DailyPlan {
     budget -= est;
   }
 
-  // 3) Sentence repetition: everything due + a few new ones.
-  const due = sentences.filter((s) => s.status !== "new" && s.due <= date && !weakS.includes(s.id)).length;
-  const fresh = sentences.filter((s) => s.status === "new").length;
-  const newCount = Math.min(fresh, settings.dailyMinutes >= 30 ? 6 : 4);
-  const sentTarget = Math.min(due + newCount, Math.max(4, Math.round(settings.dailyMinutes * 0.6)));
-  if (sentTarget > 0) {
-    const est = Math.max(3, Math.round(sentTarget * 0.6));
-    items.push({
-      id: uid("pi-"),
-      kind: "sentences",
-      title: "만능문장 암기",
-      detail: `복습 ${Math.min(due, sentTarget)} · 새 문장 ${Math.max(0, sentTarget - due)}`,
-      target: sentTarget,
-      carried: false,
-      estMinutes: est,
-    });
-    budget -= est;
+  // 3) Sentence practice: same size/order the learner uses on the 문장 page, so both screens agree.
+  const sentItem = sentencePlanItem(inputs);
+  if (sentItem) {
+    items.push(sentItem);
+    budget -= sentItem.estMinutes;
   }
 
   // 4) One lecture, unless one was carried over.
@@ -169,4 +158,28 @@ export function buildPlan(inputs: PlanInputs, date: ISODate): DailyPlan {
   }
 
   return { date, items, createdAt: Date.now() };
+}
+
+/** The 문장 연습 plan item, derived from the saved practice setup (default: random 10). */
+export function sentencePlanItem(inputs: Pick<PlanInputs, "settings" | "sentences">): PlanItem | null {
+  const cfg = { ...DEFAULT_DRILL, ...inputs.settings.drill };
+  const n = drillCount(inputs.sentences, cfg, inputs.settings.pickedSentenceIds ?? []);
+  if (!n) return null;
+  return {
+    id: uid("pi-"),
+    kind: "sentences",
+    title: "문장 연습",
+    detail: `${ORDER_LABEL[cfg.order]} ${n}문장`,
+    target: n,
+    carried: false,
+    estMinutes: Math.max(3, Math.round(n * 0.6)),
+  };
+}
+
+/** Keeps today's sentence item in sync after the practice setup changes (other items untouched). */
+export function syncSentencePlan(plan: DailyPlan, inputs: Pick<PlanInputs, "settings" | "sentences">): DailyPlan | null {
+  const cur = plan.items.find((i) => i.kind === "sentences");
+  const next = sentencePlanItem(inputs);
+  if (!cur || !next || (cur.target === next.target && cur.detail === next.detail && cur.title === next.title)) return null;
+  return { ...plan, items: plan.items.map((i) => (i === cur ? { ...next, id: cur.id } : i)) };
 }
